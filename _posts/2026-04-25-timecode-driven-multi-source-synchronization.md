@@ -301,13 +301,16 @@ def remap_pkt(pkt: bytes, base90: int) -> bytes:
     - base_pts는 90kHz 단위이므로 pcr을 300으로 나눈 몫 대상으로 빼주고 ts에서의 pts범위인 PTS_WRAP으로 모듈러 연산을 진행
     - 그리고 `//`연산으로 잘려나간 300미만의 값은 다시 더해줘서 보정
 
+<br>
+<hr>
+<br>
 
-❇︎ 송수신 sync 원리 
+### 송수신 sync 원리
 - PCR은 송출에서 보내는 신호고 수신기 내부에는 STC(System Time Clock)이라고 하는 내부 타이머가 존재함
 - 만약에 STC를 PCR과 동기화된 상태라면 PTS대로 재생했을 때 싱크가 완벽히 맞음을 보장함
 - PCR 12:00:00을 수신했는데 STC가 11:59:58이었다면 2초 딜레이시켜서 STC를 12:00:00으로 맞춤
 
-❇︎ 오디오 비디오 타임라인 
+### 오디오 비디오 타임라인 
  ![img.png](https://imucoding.github.io/assets/images/multi-sync3.png)
 
 - 오디오 프레임 1개당 비디오 프레임 1개씩 매핑되는것이 아니라 각각으로 동작
