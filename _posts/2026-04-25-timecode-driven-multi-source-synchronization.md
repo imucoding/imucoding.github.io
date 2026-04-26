@@ -301,6 +301,7 @@ def remap_pkt(pkt: bytes, base90: int) -> bytes:
     - base_pts는 90kHz 단위이므로 pcr을 300으로 나눈 몫 대상으로 빼주고 ts에서의 pts범위인 PTS_WRAP으로 모듈러 연산을 진행
     - 그리고 `//`연산으로 잘려나간 300미만의 값은 다시 더해줘서 보정
 
+
 ❇︎ 송수신 sync 원리 
 - PCR은 송출에서 보내는 신호고 수신기 내부에는 STC(System Time Clock)이라고 하는 내부 타이머가 존재함
 - 만약에 STC를 PCR과 동기화된 상태라면 PTS대로 재생했을 때 싱크가 완벽히 맞음을 보장함
