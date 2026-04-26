@@ -2,21 +2,21 @@
 layout: post
 title: Timecode-driven Multi-source Synchronization
 subtitle:
-excerpt_image: https://limhyunjune.github.io//assets/images/mulri-sync.png
+excerpt_image: https://imucoding.github.io//assets/images/mulri-sync.png
 author: Hyunjune
 categories: media
 tags: [timecode, sync, multi-source, playout]
 ---
 {% raw %}
 ## Environment
-![img.png](https://limhyunjune.github.io/assets/images/multi-sync.png)
+![img.png](https://imucoding.github.io/assets/images/multi-sync.png)
 - 4개의 테라덱은 각 소스 스트림을 송출함
 - 각 테라덱은 부팅 시점에 pts를 0으로 초기화하므로 4개의 테라덱이 정확히 동시에 켜지지 않는 이상 동일 프레임에 대해 pts가 상이함
 - 타임 코드는 동일 ntp 서버 기준으로 동일 프레임에 대해 같은 타임코드로 삽입됨
 - 네트워크를 통해 오는 각 스트림은 도착 속도가 다 제각각이므로 동일 프레임이 동일 타이밍에 수신되지 않음, 즉 수신하는 프레임의 타임코드가 정렬되어 있지 않음
 
 ## Troubleshooting
-![img.png](https://limhyunjune.github.io/assets/images/multi-sync2.png)
+![img.png](https://imucoding.github.io/assets/images/multi-sync2.png)
 1. 모든 스트림을 동시에 로컬 .ts 파일로 녹화 시작 (버퍼링)
 2. 녹화와 병렬로 각 스트림의 첫 SEI timecode를 추출
 3. 가장 느린(timecode가 큰) 스트림 기준 + 5초 = target_sec 결정
@@ -307,7 +307,7 @@ def remap_pkt(pkt: bytes, base90: int) -> bytes:
 - PCR 12:00:00을 수신했는데 STC가 11:59:58이었다면 2초 딜레이시켜서 STC를 12:00:00으로 맞춤
 
 ❇︎ 오디오 비디오 타임라인 
- ![img.png](https://limhyunjune.github.io/assets/images/multi-sync3.png)
+ ![img.png](https://imucoding.github.io/assets/images/multi-sync3.png)
 
 - 오디오 프레임 1개당 비디오 프레임 1개씩 매핑되는것이 아니라 각각으로 동작
 - 수신기 STC는 1개를 공통으로 쓰지만 오디오 비디오가 각각의 PTS tick을 가지고 정해진 시점에 재생됨
