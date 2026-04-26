@@ -2,7 +2,7 @@
 layout: post
 title: Kafka Consumer
 subtitle:
-excerpt_image: https://limhyunjune.github.io/assets/images/consumer.png
+excerpt_image: https://imucoding.github.io/assets/images/consumer.png
 author: Hyunjune
 categories: kafka
 tags: [consumer, rebalancing, group coordinator, heartbeat]
@@ -14,7 +14,7 @@ tags: [consumer, rebalancing, group coordinator, heartbeat]
 - Fetcher, ConsumerClientNetwork 등의 주요 내부 객체와 별도의 HeartBeat Thread를 생성
 
 
-![img.png](https://limhyunjune.github.io/assets/images/consumer.png)
+![img.png](https://imucoding.github.io/assets/images/consumer.png)
 
 - partition은 consumer group에서 단 하나의 consumer에만 할당됨
 - 동일 consumer group 내 consumer들은 작업량을 최대한 균등하게 분배
@@ -83,7 +83,7 @@ ConsumerRecords<String,Order> records = kafkaConsumer.poll(Duration.ofMilis(1000
 <br>
 
 
-![img.png](https://limhyunjune.github.io/assets/images/fetcher.png)
+![img.png](https://imucoding.github.io/assets/images/fetcher.png)
 - Fetcher는 Linked Queue에 데이터가 없는 경우 ConsumerClient Network에 데이터를 가져올 것을 요청
 - Linked Queue에 데이터가 있는 경우 Fetcher는 데이터 가져오고 poll() 수행 완료
 
@@ -132,7 +132,7 @@ ConsumerRecords<String,Order> records = kafkaConsumer.poll(Duration.ofMilis(1000
 - consumer group 내 새로운 consumer가 추가되거나 기존 consumer가 종료될 때, 또는 topic에 새로운 partition이 추가될 때 broker의 group coordinator는 consumer group내의 consumer 들에게 파티션을 재할당하는 rebalancing 수행 지시
 - consumer group은 group coordinator를 통해 __consumer_offsets 토픽에 그룹 내 consumer들의 offset을 기록하는데, __consumer_offsets에는 50개의 파티션이 존재, consumer group 별 작성할 파티션의 리더인 브로커가 group coordinator가 됨
 
-![img.png](https://limhyunjune.github.io/assets/images/groupcoordinator.png)
+![img.png](https://imucoding.github.io/assets/images/groupcoordinator.png)
 
 #### Group Coordinator
 - consumer들의 join group 정보
@@ -147,7 +147,7 @@ ConsumerRecords<String,Order> records = kafkaConsumer.poll(Duration.ofMilis(1000
 6) 정보 전달 성공을 공유한 뒤 개별 consumer들은 할당된 파티션에서 메시지 읽음 <br>
  
 #### Consumer Group Status
-![img.png](https://limhyunjune.github.io/assets/images/rebalance.png)
+![img.png](https://imucoding.github.io/assets/images/rebalance.png)
 
 <br>
 <hr>
@@ -252,19 +252,19 @@ try{
 
 
 #### Round Robin과 Range 비교
-![img.png](https://limhyunjune.github.io/assets/images/rrrange.png)
+![img.png](https://imucoding.github.io/assets/images/rrrange.png)
 
 #### Round Robin의 Rebalancing 후 파티션 매핑
-![img.png](https://limhyunjune.github.io/assets/images/rrrebalance.png)
+![img.png](https://imucoding.github.io/assets/images/rrrebalance.png)
 - rebalancing 후 이전의 파티션과 컨슈머의 매핑이 변경 되기 쉬움
 
 #### Sticky의 Rebalancing 후 파티션 매핑
-![img.png](https://limhyunjune.github.io/assets/images/stickyrebalance.png)
+![img.png](https://imucoding.github.io/assets/images/stickyrebalance.png)
 - 각 토픽의 partition 1,2는 유지 후 3만 나눠서 매핑
 - sticky도 eager이므로 모두 해제 후 다시 할당함
 
 #### Cooperative Sticky의 Rebalancing
-![img.png](https://limhyunjune.github.io/assets/images/cooperative.png)
+![img.png](https://imucoding.github.io/assets/images/cooperative.png)
 - 모든 매핑을 취소하지 않고 기존 매핑을 유지
 - partition 3만 순차적으로 재할당
 
@@ -272,7 +272,7 @@ try{
 <hr>
 
 ### Offset Commit의 이해
-![img.png](https://limhyunjune.github.io/assets/images/offset.png)
+![img.png](https://imucoding.github.io/assets/images/offset.png)
 - `__consumer_offsets` 에는 consumer group이 특정 topic의 partition 별로 읽기 commit 한 offset의 정보를 가짐
 - 어느 consumer가 commit 했는 지에 대한 정보는 가지지 않음
 - offset 정보는 다음에 읽을 offset임

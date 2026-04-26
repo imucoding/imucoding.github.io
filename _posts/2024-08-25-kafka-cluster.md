@@ -2,14 +2,14 @@
 layout: post
 title: Kafka Cluster
 subtitle:
-excerpt_image: https://limhyunjune.github.io/assets/images/cluster.png
+excerpt_image: https://imucoding.github.io/assets/images/cluster.png
 author: Hyunjune
 categories: kafka
 tags: [cluster, aws]
 ---
 {% raw %}
 ### Multi Broker Cluster 구축
-![img.png](https://limhyunjune.github.io/assets/images/cluster.png)
+![img.png](https://imucoding.github.io/assets/images/cluster.png)
 
 - 각 인스턴스 모두 동일 VPC에 속해야 함
 - 보안 그룹 설정

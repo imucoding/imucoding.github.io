@@ -2,7 +2,7 @@
 layout: post
 title: Zookeeper 연동
 subtitle:
-excerpt_image: https://limhyunjune.github.io/assets/images/zookeeper.png
+excerpt_image: https://imucoding.github.io/assets/images/zookeeper.png
 author: Hyunjune
 categories: kafka
 tags: [zookeeper, controller, leader election]
@@ -13,7 +13,7 @@ tags: [zookeeper, controller, leader election]
 
 #### Zookeeper의 Z node
 
-![img.png](https://limhyunjune.github.io/assets/images/zookeeper.png)
+![img.png](https://imucoding.github.io/assets/images/zookeeper.png)
 - 분산 시스템에서 리더 노드를 선출
 - 개별 노드 간 상태 정보의 동기화를 위한 복잡한 lock 관리 기능
 - 개별 노드들은 zookeeper의 znode를 계속 모니터링 하여 znode에 변경 발생 시 watch event가 트리거되어 변경 정보가 개별 노드들에게 통보
@@ -46,7 +46,7 @@ zookeeper_shell localhost:2181
 
 ### Controller의 Leader Election 수행 프로세스
 
-![img.png](https://limhyunjune.github.io/assets/images/leaderelection.png)
+![img.png](https://imucoding.github.io/assets/images/leaderelection.png)
 
 1) broker #3이 shutdown되고 zookeeper는 session timeout 동안 heartbeat이 오지 않으므로 해당 broker 노드 정보 갱신 <br>
 2) controller는 zookeeper를 모니터링 하던 중 watch event로 broker #3에 대한 down 정보를 받음 <br>

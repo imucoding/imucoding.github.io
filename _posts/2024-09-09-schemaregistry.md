@@ -2,7 +2,7 @@
 layout: post
 title: Schema Registry
 subtitle:
-excerpt_image: https://limhyunjune.github.io/assets/images/driver.png
+excerpt_image: https://imucoding.github.io/assets/images/driver.png
 author: Hyunjune
 categories: kafka
 tags: [schema registry, backward, forward]
@@ -12,7 +12,7 @@ tags: [schema registry, backward, forward]
 - confluent kafka는 schema registry를 통해 schema 정보를 별도로 관리하는 기능 제공
 - 토픽으로 전송되는 data의 schema는 schema registry에서 ID + version 별로 중앙 관리 되므로 레코드 별로 schema를 중복해서 전송할 필요가 없음
 
-![img.png](https://limhyunjune.github.io/assets/images/schemaregistry.png)
+![img.png](https://imucoding.github.io/assets/images/schemaregistry.png)
 
 #### Schema Registry 역할
 - schema 전송 없이 레코드 값만 kafka로 전송할 수 있게 해줌
@@ -39,13 +39,13 @@ Json (schemaless)
 
 Schema + Avro payload
 
-![img.png](https://limhyunjune.github.io/assets/images/avro.png)
+![img.png](https://imucoding.github.io/assets/images/avro.png)
 - avro payload는 바이너리 포맷이며 필드, 타입 정보 등이 포함되지 않음
 - json + schema 보다 훨씬 빠르며 스키마 레지스트리에 최적화
 
 Schema ID + Avro payload
 
-![img.png](https://limhyunjune.github.io/assets/images/schemaid.png)
+![img.png](https://imucoding.github.io/assets/images/schemaid.png)
 
 
 <br>
@@ -281,7 +281,7 @@ http GET http://localhost:8081/config/mysqlavro.ac.customers-value
 
 #### NoSQL에서 스키마 변경에 따른 데이터 저장
 
-![img.png](https://limhyunjune.github.io/assets/images/nosql.png)
+![img.png](https://imucoding.github.io/assets/images/nosql.png)
 - schemaless : 비슷한 유형의 데이터 그룹 들을 묶는 동적 스키마로 발전 필요
 
 <br>
@@ -291,18 +291,18 @@ http GET http://localhost:8081/config/mysqlavro.ac.customers-value
 - 쓰기 스키마 : 애플리케이션이 데이터 전송 시 데이터를 부호화하기 위해 사용하는 스키마
 - 읽기 스키마 : 애플리케이션이 데이터를 복화하하여 읽어들일 시 사용하는 스키마
 
-![img.png](https://limhyunjune.github.io/assets/images/readwriteschema.png)
+![img.png](https://imucoding.github.io/assets/images/readwriteschema.png)
 - 별도의 애플리케이션에서 쓰기 스키마와 읽기 스키마를 따로 가져갈 필요 있는가?
 - 쓰기 스키마와 읽기 스키마가 다룰 수 있는가?
 
-![img.png](https://limhyunjune.github.io/assets/images/schemachange.png)
+![img.png](https://imucoding.github.io/assets/images/schemachange.png)
 - v1에서 v2로 스키마 변경된다면 수신 App은 당연히 동일 스키마로 변경되어야 하는가?
 - 기존 수신 App은 새로운 스키마 변경을 어떻게 반영해서 프로그램 변경?
 - 변경될 때마다 수신 App 적용하면 스키마 일관성은 어떻게 유지?
 
 #### 호환성 없는 스키마 발전에 따른 메시지 변화
 
-![img.png](https://limhyunjune.github.io/assets/images/messagechange.png)
+![img.png](https://imucoding.github.io/assets/images/messagechange.png)
 - 수신 스키마가 변경되는 경우 호환이 가능하다면 읽으면서 차이 해소
 
 #### Avro의 읽기 스키마와 쓰기 스키마 호환성
@@ -326,23 +326,23 @@ http GET http://localhost:8081/config/mysqlavro.ac.customers-value
 case 1) 예전 버전에서 속성이 추가된 새로운 버전의 읽기 스키마는 기본 값으로 해당 속성을 읽음 <br>
 따라서 읽기 스키마에 새로운 버전으로 속성이 추가될 경우 반드시 기본 값 설정이 필요
 
-![img.png](https://limhyunjune.github.io/assets/images/backward1.png)
+![img.png](https://imucoding.github.io/assets/images/backward1.png)
 
 case 2) 예전 버전에서 속성이 삭제된 새로운 버전의 읽기 스키마는 해당 속성을 무시 <br>
 
-![img.png](https://limhyunjune.github.io/assets/images/backward2.png)
+![img.png](https://imucoding.github.io/assets/images/backward2.png)
 
 #### 상위 호환성 (FORWARD)
 - 예전 버전의 읽기 스키마는 새로운 버전의 쓰기 스키마를 처리할 수 있음
 
 case 1) 새로운 버전 쓰기 스키마에 신규 속성이 추가되는 경우 예전 버전의 읽기 스키마는 해당 속성을 무시 <br>
 
-![img.png](https://limhyunjune.github.io/assets/images/forward1.png)
+![img.png](https://imucoding.github.io/assets/images/forward1.png)
 
 case 2) 새로운 버전 쓰기 스키마에 기존 속성이 삭제되는 경우 예전 버전의 읽기 스키마는 해당 속성의 기본 값으로 읽어들임 <br>
 따라서 삭제되는 기존 속성은 반드시 예전 버전에서 기본 값을 가지고 있어야 함
 
-![img.png](https://limhyunjune.github.io/assets/images/forward2.png)
+![img.png](https://imucoding.github.io/assets/images/forward2.png)
 
 #### Avro 스키마 호환성 체크
 - 새로 추가되는 컬럼이 기본 값을 가지고 있지 않거나 (하위 호환성 오류) 삭제되는 컬럼이 기본 값을 가지고 있지 않은 경우 (상위 호환성 오류) 호환성 오류 발생
@@ -376,7 +376,7 @@ case 2) 새로운 버전 쓰기 스키마에 기존 속성이 삭제되는 경�
 #### Subject 스키마 호환성
 - subject 내의 스키마 호환성 (compatibility) 체크
 
-![img.png](https://limhyunjune.github.io/assets/images/subjectevolve.png)
+![img.png](https://imucoding.github.io/assets/images/subjectevolve.png)
 - id는 key, value 따로 관리하지 않음, 스키마 저장 / 변경 시 새로 할당
 - value의 schema 변경 되어 새로운 id가 할당되고 version이 업데이트 됨
 - 스키마 호환성은 schema id 레벨로 체크되지 않고 subject 레벨로 체크됨
@@ -391,7 +391,7 @@ case 2) 새로운 버전 쓰기 스키마에 기존 속성이 삭제되는 경�
 - schema registry에 subject 별로 호환성이 설정되어 있다면 해당 호환성에 맞지 않는 스키마 변경은 허용되지 않음
 
 #### Schema Registry 기반의 Producer와 Consumer
-![img.png](https://limhyunjune.github.io/assets/images/schemaproducerconsumer.png)
+![img.png](https://imucoding.github.io/assets/images/schemaproducerconsumer.png)
 - schema registry를 이용한 producer와 consumer 애플리케이션은 별도의 스키마를 개별적으로 가지고 있음
 - 스키마가 변경됨에 따라 producer 또는 consumer가 가지고 있는 스키마를 개별적으로 update 할 수 있음
 - schema registry에 스키마에 대해 호환성이 설정되면 해당 호환성에 부합하는 스키마 변경이 되었을 때만 producer와 consumer 애플리케이션 스키마 update 가능

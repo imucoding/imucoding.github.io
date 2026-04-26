@@ -2,7 +2,7 @@
 layout: post
 title: 헬름을 이용한 애플리케이션 패키징 및 관리
 subtitle:
-excerpt_image: https://limhyunjune.github.io//assets/images/chart_arc.png
+excerpt_image: https://imucoding.github.io//assets/images/chart_arc.png
 author: Hyunjune
 categories: kubernetes
 tags: helm
@@ -28,7 +28,7 @@ helm search repo web --versions # 애플리케이션 검색
 
 **패키지(차트) 구조** 
 
-![image](https://limhyunjune.github.io/assets/images/chart_arc.png)
+![image](https://imucoding.github.io/assets/images/chart_arc.png)
 - 차트는 압축 파일 형태로 패키징되며 차트 이름과 버전이 부여됨
 - 압축 파일에는 디렉토리가 들어있는데 이 디렉토리 이름이 차트 이름이 됨
 - `Chart.yaml`
@@ -79,7 +79,7 @@ metadata:
 
 <br>
 
-![image](https://limhyunjune.github.io/assets/images/web-ping.png)
+![image](https://imucoding.github.io/assets/images/web-ping.png)
 
 ```
 helm lint web-ping

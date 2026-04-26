@@ -2,7 +2,7 @@
 layout: post
 title: Log Cleanup Policy
 subtitle:
-excerpt_image: https://limhyunjune.github.io/assets/images/active.png
+excerpt_image: https://imucoding.github.io/assets/images/active.png
 author: Hyunjune
 categories: kafka
 tags: [delete, compact, retention]
@@ -34,13 +34,13 @@ tags: [delete, compact, retention]
 - active segment는 compact 대상 제외
 - compaction은 파티션 레벨에서 수행되며, 개별 segment 들을 새로운 segment로 재생성함
 
-![img.png](https://limhyunjune.github.io/assets/images/active.png)
+![img.png](https://imucoding.github.io/assets/images/active.png)
 
 - `log.cleaner.enable=true`로 설정 필요 (default true)
   - 세그먼트 삭제, 압축을 자동으로 수행
   - false면 수동으로 지워야 함
 
-![img.png](https://limhyunjune.github.io/assets/images/cleandirty.png)
+![img.png](https://imucoding.github.io/assets/images/cleandirty.png)
 - compaction이 적용된 segment는 clean영역, 적용되지 않은 segment는 dirty영역이라고 부름
 
 #### Log Compaction 수행 후
@@ -83,7 +83,7 @@ kafka-configs --bootstrap-server localhost:9092 --entity-type topics --entity-na
 ```
 
 #### Compaction 수행 시 메시지의 삭제
-![img.png](https://limhyunjune.github.io/assets/images/compaction.png)
+![img.png](https://imucoding.github.io/assets/images/compaction.png)
 - key는 있지만 value가 null인 경우 tombstone으로 내부적 표시
 - `log.cleaner.delete.ms`가 지나면 tombstone 메시지 삭제됨
 

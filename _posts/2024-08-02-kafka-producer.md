@@ -2,7 +2,7 @@
 layout: post
 title: Kafka Producer
 subtitle:
-excerpt_image: https://limhyunjune.github.io/assets/images/producer.png
+excerpt_image: https://imucoding.github.io/assets/images/producer.png
 author: Hyunjune
 categories: kafka
 tags: [producer, idempotence, partitioner]
@@ -13,7 +13,7 @@ tags: [producer, idempotence, partitioner]
 - Producer는 성능/로드밸런싱/가용성/업무 정합성등을 고려하여 어떤 브로커의 파티션으로 메시지를 보내야 할지 전략적으로 결정됨
 
 #### Producer Record
-![img.png](https://limhyunjune.github.io/assets/images/producerrecord.png)
+![img.png](https://imucoding.github.io/assets/images/producerrecord.png)
 
 
 
@@ -100,13 +100,13 @@ kakfaProducer.send(producerRecord);
 - 최대한 메시지를 파티션에 균등하게 분배하려는 전략으로써 메시지 배치를 순차적으로 다른 파티션으로 전송
 - 메시지가 배치 데이터를 빨리 채우지 못하면서 전송이 늦어지거나 배치를 다 채우지 못하고 전송하면서 성능 이슈
 
-![img.png](https://limhyunjune.github.io/assets/images/roundrobin.png)
+![img.png](https://imucoding.github.io/assets/images/roundrobin.png)
 
 #### 스티키 파티셔닝
 - kafka 2.4 이후 default 파티셔닝 전략
 - 라운드 로빈의 성능을 개선하고자 특정 파티션으로 전송되는 하나의 배치에 메시지를 빠르게 먼저 채워서 보내는 방식
 
-![img.png](https://limhyunjune.github.io/assets/images/sticky.png)
+![img.png](https://imucoding.github.io/assets/images/sticky.png)
 
 
 ### key 값을 가지는 메시지 전송
@@ -114,7 +114,7 @@ kakfaProducer.send(producerRecord);
 - 특정 key 값을 가지는 메시지는 단일 파티션 내에서 전송 순서가 보장되어 consumer에서 읽힘
   - 하나의 파티션에서만 메시지 순서 보장
 
-![img.png](https://limhyunjune.github.io/assets/images/producerkey.png)
+![img.png](https://imucoding.github.io/assets/images/producerkey.png)
 
 #### key 메시지 전송
 - 전송
@@ -189,7 +189,7 @@ public class CustomPartitioner implements Partitioner {
 
 ### send() 메소드 호출 프로세스
 
-![img.png](https://limhyunjune.github.io/assets/images/producer.png)
+![img.png](https://imucoding.github.io/assets/images/producer.png)
 - Kafka Producer 전송은 Producer Client의 별도 Thread가 전송을 담당한다는 점에서 기본적으로 Thread간 Async 전송
 - Main Thread가 send( ) 메소드를 호출하여 메시지 전송을 시작하지만 바로 전송되지 않으며 내부 Buffer에서 토픽 파티션에 따라 Record Batch 단위로 묶인 뒤 전송됨
 - producer client의 내부 메모리 (**Record Accumulator**)에 여러 개의 batch들로 buffer.memory 설정 사이즈만큼 보관 가능
@@ -200,7 +200,7 @@ public class CustomPartitioner implements Partitioner {
 #### max.inflight.requests.per.connection
 - 한 번에 전송 가능한 메시지 배치 개수 (default=5)
 - 1보다 큰 경우 일부 배치의 전송 실패 시 순서 뒤집힐 수 있음
-![img.png](https://limhyunjune.github.io/assets/images/outorder.png)
+![img.png](https://imucoding.github.io/assets/images/outorder.png)
 
 <br>
 <hr>
@@ -266,7 +266,7 @@ public class CustomCallback implements Callback{
 <hr>
 
 ### 메시지 전송/재전송 시간 파라미터 이해
-![img.png](https://limhyunjune.github.io/assets/images/retry.png)
+![img.png](https://imucoding.github.io/assets/images/retry.png)
 - acks = 1 or all 인 동기식 전송에 적용됨
 - max.block.ms
   - send() 호출 시 RecordAccumulator 입력이 block되는 최대 시간, 초과 시 TimeoutException
@@ -327,7 +327,7 @@ request.timeout.ms = 10000ms
   - 브로커에서는 만약 sequence가 중복인 경우 로그에 기록하지 않고 ack만 전송
   - 브로커는 자신이 가지고 있는 메시지의 sequence보다 1만큼 큰 경우에만 브로커에 저장
 
-![img.png](https://limhyunjune.github.io/assets/images/nodup.png)
+![img.png](https://imucoding.github.io/assets/images/nodup.png)
 
 
 #### Idempotence 설정
@@ -344,7 +344,7 @@ request.timeout.ms = 10000ms
 - 하지만 명시적으로 enable.idempotence=true를 선언한 뒤에 다른 파라미터 설정 바꾸면 오류 발생
 
 #### Idempotence 기반에서 메시지 전송 순서 유지
-![img.png](https://limhyunjune.github.io/assets/images/idempotence.png)
+![img.png](https://imucoding.github.io/assets/images/idempotence.png)
 
 주의
 - Idempotence는 producer와 broker 사이 retry 시에만 중복 제거를 수행하는 메커니즘

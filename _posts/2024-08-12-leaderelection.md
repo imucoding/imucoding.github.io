@@ -2,7 +2,7 @@
 layout: post
 title: Preferred, Unclean Leader Election
 subtitle:
-excerpt_image: https://limhyunjune.github.io/assets/images/insync.png
+excerpt_image: https://imucoding.github.io/assets/images/insync.png
 author: Hyunjune
 categories: kafka
 tags: [preferred, unclean, leader election]
@@ -13,8 +13,8 @@ tags: [preferred, unclean, leader election]
 - broker가 shutdown 후 재기동 될 때 preferred leader broker를 일정 시간 이후에 재선출
 - `auto.leader.rebalance.enable=true`로 설정하고, `leader.imbalance.check.interval.seconds`를 일정 시간으로 설정 (기본 300초)
 
-![img.png](https://limhyunjune.github.io/assets/images/normal.png) <br>
-![img.png](https://limhyunjune.github.io/assets/images/preferred.png)
+![img.png](https://imucoding.github.io/assets/images/normal.png) <br>
+![img.png](https://imucoding.github.io/assets/images/preferred.png)
 - preferred leader election 적용 시 broker가 shutdown되면 leader는 변함 없지만 ISR은 변함
 
 <br>

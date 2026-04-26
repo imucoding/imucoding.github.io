@@ -2,7 +2,7 @@
 layout: post
 title: Kafka Connect 개요
 subtitle:
-excerpt_image: https://limhyunjune.github.io//assets/images/connect-cluster.png
+excerpt_image: https://imucoding.github.io//assets/images/connect-cluster.png
 author: Hyunjune
 categories: kafka
 tags: [connect, spooldir source connector, schema registry, kafkacat, internal topics]
@@ -31,13 +31,13 @@ tags: [connect, spooldir source connector, schema registry, kafkacat, internal t
   - JsonConverter
   - AvroConverter
 
-![img.png](https://limhyunjune.github.io/assets/images/connector.png)
+![img.png](https://imucoding.github.io/assets/images/connector.png)
 
 <br>
 <hr>
 
 ### Connect Cluster 아키텍처
-![img.png](https://limhyunjune.github.io/assets/images/connect-cluster.png)
+![img.png](https://imucoding.github.io/assets/images/connect-cluster.png)
 - connect cluster는 동일 group id를 지정하는 것으로 클러스터를 구축하고 kafka cluster 내의 internal topic들을 통해 서로의 상태 정보를 공유함
 
 #### Connect, Connector, Worker, Task 정의
@@ -111,7 +111,7 @@ jstack pid
 ```
 
 #### Source Connect에서 Connector 등록 시 수행 프로세스
-![img.png](https://limhyunjune.github.io/assets/images/spool.png)
+![img.png](https://imucoding.github.io/assets/images/spool.png)
 - `tasks.max` 개수만큼 thread 생성
 - connector 별 멀티 thread 지원 여부 다름
 
@@ -156,7 +156,7 @@ public class OrderModel implements Serializable{
   - custom 자바 객체를 customer에서 타겟 DB에 맞춰 매번 생성하기 어려움
 - connector에서 schema 설정 시 파싱 후 객체 생성 필요 없이 schema 정보 포함 직렬화
 
-![img.png](https://limhyunjune.github.io/assets/images/converter.png)
+![img.png](https://imucoding.github.io/assets/images/converter.png)
 
 #### Converter 지원 포맷
 - Json, Avro, Protobuf, String, ByteArray
@@ -177,7 +177,7 @@ public class OrderModel implements Serializable{
 - confluent kafka는 schema registry를 통해 schema 정보 별도로 관리하는 기능 제공
 - 토픽으로 전송되는 data의 schema는 schema registry에서 ID + version 별로 중앙 관리되므로 레코드 별로 schema를 중복해서 전송할 필요 없음
 
-![img.png](https://limhyunjune.github.io/assets/images/registry.png)
+![img.png](https://imucoding.github.io/assets/images/registry.png)
 
 <br>
 <hr>

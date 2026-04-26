@@ -2,7 +2,7 @@
 layout: post
 title: JDBC Connector
 subtitle:
-excerpt_image: https://limhyunjune.github.io/assets/images/driver.png
+excerpt_image: https://imucoding.github.io/assets/images/driver.png
 author: Hyunjune
 categories: kafka
 tags: [connector, jdbc, smt]
@@ -13,7 +13,7 @@ tags: [connector, jdbc, smt]
 - JDBC source connector는 JDBC driver를 이용하여 DB 접속 및 데이터 추출을 수행 후 producer를 이용하여 broker로 데이터를 전송함
 - JDBC source connector는 source 시스템에 주기적으로 query를 날려 변경된 데이터를 추출하는 방식
 
-![img.png](https://limhyunjune.github.io/assets/images/driver.png)
+![img.png](https://imucoding.github.io/assets/images/driver.png)
 
 <br>
 <hr>
@@ -26,10 +26,10 @@ tags: [connector, jdbc, smt]
   - `bulk` : 테이블 데이터 한번에 모두 kafka 전송. 이후 테이블 데이터가 모두 삭제되어야 불필요한 재전송 안함
 
 #### Incrementing 모드
-![img.png](https://limhyunjune.github.io/assets/images/incremental.png)
+![img.png](https://imucoding.github.io/assets/images/incremental.png)
 
 #### Timestamp 모드
-![img.png](https://limhyunjune.github.io/assets/images/timestamp.png)
+![img.png](https://imucoding.github.io/assets/images/timestamp.png)
 
 <br>
 <hr>
@@ -192,10 +192,10 @@ show variables like `%time_zone%`;
 ### JDBC Source Connector의 offset 메커니즘
 
 #### incrementing
-![img.png](https://limhyunjune.github.io/assets/images/incrementingoffset.png)
+![img.png](https://imucoding.github.io/assets/images/incrementingoffset.png)
 
 #### timestamp
-![img.png](https://limhyunjune.github.io/assets/images/timestampoffset.png)
+![img.png](https://imucoding.github.io/assets/images/timestampoffset.png)
 
 #### connect-offsets topic 삭제로 reset 하기
 1. 기존 connector 삭제 <br>
@@ -331,7 +331,7 @@ show variables like `%time_zone%`;
 - connect의 consumer가 주기적으로 카프카 토픽 메시지를 읽어서 타겟 DB로 데이터 연동
 - RDBMS에서 데이터 추출은 JDBC source connector, CDC source connector 등을 사용하지만 RDBMS로 데이터 입력은 주로 JDBC sink connector를 사용
 
-![img.png](https://limhyunjune.github.io/assets/images/sink-connector.png)
+![img.png](https://imucoding.github.io/assets/images/sink-connector.png)
 
 <br>
 <hr>
@@ -392,14 +392,14 @@ create table customer_sink(
 
 
 ### JDBC Sink Connector의 Update 로직
-![img.png](https://limhyunjune.github.io/assets/images/update.png)
+![img.png](https://imucoding.github.io/assets/images/update.png)
 - sink에서 update를 캡처하려면 timestamp도 함께 갱신 필요
 - sink에서 update로 kafka 메시지 event 발생
 - sink connector는 target 테이블의 해당 pk로 기존 레코드가 있으면 update 적용
 - incrementing인 경우는 같은 key로 토픽에 데이터가 생성되지 않으므로 update 불가능 
 
 ### JDBC Sink Connector의 Delete 로직
-![img.png](https://limhyunjune.github.io/assets/images/delete.png)
+![img.png](https://imucoding.github.io/assets/images/delete.png)
 - debezium cdc source connector는 delete도 kafka에 이벤트로 발생시키며 key 값은 pk, value는 null 값으로 발생
 - sink connector는 해당 pk로 기존 레코드가 있는 경우 delete 적용
 
@@ -413,7 +413,7 @@ insert into 테이블 명 values (...) on duplicate key update ... ;
 <hr>
 
 ### JDBC Source Connector의 날짜 / 시간 데이터 변환
-![img.png](https://limhyunjune.github.io/assets/images/date.png)
+![img.png](https://imucoding.github.io/assets/images/date.png)
 ```
 create table datetime_tab(
   id int NOT NULL PRIMARY KEY,

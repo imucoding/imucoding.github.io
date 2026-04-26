@@ -2,7 +2,7 @@
 layout: post
 title: Multi-node Kafka Cluster
 subtitle:
-excerpt_image: https://limhyunjune.github.io/assets/images/multi.png
+excerpt_image: https://imucoding.github.io/assets/images/multi.png
 author: Hyunjune
 categories: kafka
 tags: [cluster, partition, scale out, replication, leader, follower]
@@ -60,7 +60,7 @@ kafka-topics --bootstrap-server localhost:9092 --create --topic 토픽명 --part
 - replication은 leader에서 follower로만 이루어짐
 - controller (leader broker)가 broker의 replication 관리
 
-![img.png](https://limhyunjune.github.io/assets/images/multi.png)
+![img.png](https://imucoding.github.io/assets/images/multi.png)
 
 <br>
 <hr>
