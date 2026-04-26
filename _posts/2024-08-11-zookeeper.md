@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Zookeeper 연동
-subtitle:
+subtitle: ''
 excerpt_image: https://imucoding.github.io/assets/images/zookeeper.png
 author: Hyunjune
 categories: kafka

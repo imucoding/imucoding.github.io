@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Log Cleanup Policy
-subtitle:
+subtitle: ''
 excerpt_image: https://imucoding.github.io/assets/images/active.png
 author: Hyunjune
 categories: kafka

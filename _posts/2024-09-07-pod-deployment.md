@@ -1,7 +1,7 @@
 ---
 layout: post
 title: 파드와 디플로이먼트로 컨테이너 시작
-subtitle:
+subtitle: ''
 excerpt_image: 
 author: Hyunjune
 categories: kubernetes

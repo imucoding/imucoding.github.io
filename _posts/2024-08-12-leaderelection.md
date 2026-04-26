@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Preferred, Unclean Leader Election
-subtitle:
+subtitle: ''
 excerpt_image: https://imucoding.github.io/assets/images/insync.png
 author: Hyunjune
 categories: kafka

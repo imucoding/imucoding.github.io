@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Kafka Producer
-subtitle:
+subtitle: ''
 excerpt_image: https://imucoding.github.io/assets/images/producer.png
 author: Hyunjune
 categories: kafka

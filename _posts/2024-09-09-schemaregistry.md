@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Schema Registry
-subtitle:
+subtitle: ''
 excerpt_image: https://imucoding.github.io/assets/images/driver.png
 author: Hyunjune
 categories: kafka

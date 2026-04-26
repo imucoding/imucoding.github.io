@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Multi-node Kafka Cluster
-subtitle:
+subtitle: ''
 excerpt_image: https://imucoding.github.io/assets/images/multi.png
 author: Hyunjune
 categories: kafka

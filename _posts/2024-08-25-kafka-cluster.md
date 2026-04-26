@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Kafka Cluster
-subtitle:
+subtitle: ''
 excerpt_image: https://imucoding.github.io/assets/images/cluster.png
 author: Hyunjune
 categories: kafka

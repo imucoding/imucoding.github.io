@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Kafka Connect 개요
-subtitle:
+subtitle: ''
 excerpt_image: https://imucoding.github.io//assets/images/connect-cluster.png
 author: Hyunjune
 categories: kafka

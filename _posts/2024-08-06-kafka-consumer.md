@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Kafka Consumer
-subtitle:
+subtitle: ''
 excerpt_image: https://imucoding.github.io/assets/images/consumer.png
 author: Hyunjune
 categories: kafka
