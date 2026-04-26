@@ -1,8 +1,8 @@
 ---
 layout: post
 title: Timecode-driven Multi-source Synchronization
-subtitle:
-excerpt_image: https://imucoding.github.io//assets/images/mulri-sync.png
+subtitle: ''
+excerpt_image: https://imucoding.github.io/assets/images/multi-sync.png
 author: Hyunjune
 categories: media
 tags: [timecode, sync, multi-source, playout]
@@ -322,3 +322,4 @@ STC = 3000 : 비디오 3번 프레임 출력
 STC = 3840 : 오디오 3번 프레임 출력
 STC = 4500 : 비디오 4번 프레임 출력
 ```
+{% endraw %}
