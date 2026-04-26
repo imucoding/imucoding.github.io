@@ -1,5 +1,12 @@
 @charset "utf-8";
 
+// Deprecation Warning: Using / for division outside of calc() is deprecated
+// and will be removed in Dart Sass 2.0.0.
+// Recommendation: math.div($header-height, 1.5) or calc($header-height / 1.5)
+// More info and automated migrator: https://sass-lang.com/d/slash-div
+@use 'sass:math';
+@use 'sass:meta';
+
 // Define defaults for each variable.
 
 $base-font-family: Helvetica Neue, Helvetica, Arial, sans-serif, !default;
@@ -55,6 +62,18 @@ $on-laptop:        800px !default;
 
 @mixin relative-font-size($ratio) {
   font-size: $base-font-size * $ratio;
+}
+
+// Better compatibility for divisions.
+//
+// Deprecation Warning: Using / for division outside of calc() is deprecated
+// and will be removed in Dart Sass 2.0.0."
+@function divide($dividend, $divisor: 1) {
+  @if meta.function-exists('div', 'math') {
+    @return math.div($dividend, $divisor);
+  } @else {
+    @return ($dividend / $divisor);
+  }
 }
 
 // Import partials.
