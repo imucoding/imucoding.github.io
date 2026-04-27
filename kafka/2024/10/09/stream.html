@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>KSQLDB Stream &amp; Table | IMU TECH BLOG</title>
+<meta name="generator" content="Jekyll v4.4.1">
+<meta property="og:title" content="KSQLDB Stream &amp; Table">
+<meta name="author" content="Hyunjune">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="Stream 개요 stream은 메시지 streaming 처리를 위해서 추상화한 layer">
+<meta property="og:description" content="Stream 개요 stream은 메시지 streaming 처리를 위해서 추상화한 layer">
+<link rel="canonical" href="https://imucoding.github.io/kafka/2024/10/09/stream.html">
+<meta property="og:url" content="https://imucoding.github.io/kafka/2024/10/09/stream.html">
+<meta property="og:site_name" content="IMU TECH BLOG">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2024-10-09T00:00:00+00:00">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="KSQLDB Stream &amp; Table">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Hyunjune"},"dateModified":"2024-10-09T00:00:00+00:00","datePublished":"2024-10-09T00:00:00+00:00","description":"Stream 개요 stream은 메시지 streaming 처리를 위해서 추상화한 layer","headline":"KSQLDB Stream &amp; Table","mainEntityOfPage":{"@type":"WebPage","@id":"https://imucoding.github.io/kafka/2024/10/09/stream.html"},"url":"https://imucoding.github.io/kafka/2024/10/09/stream.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="icon" href="">
+  <link rel="canonical" href="https://imucoding.github.io">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-noto-sans@0.0.72/index.min.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <script src="/assets/js/main.js"></script><link type="application/atom+xml" rel="alternate" href="https://imucoding.github.io/feed.xml" title="IMU TECH BLOG">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/languages/go.min.js" async></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// Init highlight js
+document.addEventListener('DOMContentLoaded', function(event) {
+  var els = document.querySelectorAll('pre code')
+
+  function addLangData(block) {
+    var outer = block.parentElement.parentElement.parentElement;
+    var lang = block.getAttribute('data-lang');
+    for (var i = 0; i < outer.classList.length; i++) {
+      var cls = outer.classList[i];
+      if (cls.startsWith('language-')) {
+        lang = cls;
+        break;
+      }
+    }
+    if (!lang) {
+      cls = block.getAttribute('class');
+      lang = cls ? cls.replace('hljs ', '') : '';
+    }
+    if (lang.startsWith('language-')) {
+      lang = lang.substr(9);
+    }
+    block.setAttribute('class', 'hljs ' + lang);
+    block.parentNode.setAttribute('data-lang', lang);
+  }
+
+  function addBadge(block) {
+    var enabled = ('true' || 'true').toLowerCase();
+    if (enabled == 'true') {
+      var pre = block.parentElement;
+      pre.classList.add('badge');
+    }
+  }
+
+  function handle(block) {
+    addLangData(block);
+    addBadge(block)
+    hljs.highlightBlock(block);
+  }
+
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    handle(el);
+  }
+});
+</script>
+
+<style>
+  /* code language badge */
+  pre.badge::before {
+    content: attr(data-lang);
+    color: #fff;
+    background-color: #ff4e00;
+    padding: 0 .5em;
+    border-radius: 0 2px;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 32px;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+  }
+
+  /* fix wrong badge display for firefox browser */
+  code > table pre::before {
+    display: none;
+  }
+</style>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe-lightbox.umd.min.js" async></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe.umd.min.js" async></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe.min.css" rel="stylesheet">
+<style>
+  .pswp .pswp__container .pswp__img {
+    background-color: white;
+  }
+</style>
+
+<script>
+  function initPhotoSwipe() {
+    let customOptions = {};
+
+    try {
+      const data = ``.replaceAll("=>", ":");
+      customOptions = JSON.parse(data);
+    } catch (e) {
+      console.info("Invalid custom photo previewer options! " + e.message);
+    }
+
+    // Define object and gallery options
+    const options = Object.assign(
+      {
+        gallery: "section.main",
+        children: "a.photo-swipe",
+        photo_scale: 2,
+        // dynamic import is not supported in UMD version
+        pswpModule: PhotoSwipe,
+      },
+      customOptions
+    );
+
+    const galleryEl = document.querySelector(options.gallery);
+    if (!galleryEl) {
+      return;
+    }
+
+    const imgEls = [];
+    const els = galleryEl.querySelectorAll("img:not(.emoji)");
+    els.forEach((el) => {
+      if (el.src.trim() == "") {
+        return;
+      }
+      if (!imgEls.includes(el)) {
+        imgEls.push(el);
+      }
+    });
+
+    if (imgEls.length === 0) {
+      return;
+    }
+
+    imgEls.forEach((imgEl) => {
+      imgEl.outerHTML = `
+      <a class="photo-swipe"
+        href="${imgEl.src}"
+        data-pswp-width="${
+          Math.max(imgEl.naturalWidth, imgEl.width) * options.photo_scale
+        }"
+        data-pswp-height="${
+          Math.max(imgEl.naturalHeight, imgEl.height) * options.photo_scale
+        }"
+        data-pswp-caption="${imgEl.getAttribute("caption") || imgEl.alt}"
+        target="_blank">
+        ${imgEl.outerHTML}
+      </a>`;
+    });
+
+    // Initialize PhotoSwipe 5
+    var lightbox = new PhotoSwipeLightbox(options);
+
+    lightbox.init();
+  }
+
+  window.addEventListener("load", initPhotoSwipe);
+</script>
+
+<meta name="google-site-verification" content="d_7fHqoWfEPFWDaXJ19fg2f5xy6BPZbrY4fbsJjIUSI">
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="site-header " role="banner">
+
+  <div class="wrapper">
+    <div class="site-header-inner">
+<span class="site-brand"><a class="site-brand-inner" rel="author" href="/">
+  <img class="site-favicon" title="IMU TECH BLOG" src="" onerror="this.style.display='none'">
+  IMU TECH BLOG
+</a>
+</span><nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger">
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewbox="0 0 18 15" width="18px" height="15px">
+                <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"></path>
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger">
+<a class="page-link" href="/about.html">ABOUT</a><a class="page-link" href="/archives.html">ARCHIVES</a><a class="page-link" href="/categories.html">CATEGORIES</a><a class="page-link" href="/">HOME</a><a class="page-link" href="/tags.html">TAGS</a>
+
+
+
+
+
+
+
+
+
+<div class="page-link" style="display: inline;">
+
+
+
+<div id="google_translate_element" style="display: none;">
+</div>
+
+<div class="ct-language">
+  <ul class="list-unstyled ct-language-dropdown">
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="en">
+          
+          <img src="https://cdn.countryflags.com/thumbs/united-states-of-america/flag-400.png" title="English">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="fr">
+          
+          <img src="https://cdn.countryflags.com/thumbs/france/flag-400.png" title="French">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="zh-CN">
+          
+          <img src="https://cdn.countryflags.com/thumbs/china/flag-400.png" title="Chinese(Simple)">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ja">
+          
+          <img src="https://cdn.countryflags.com/thumbs/japan/flag-400.png" title="Japanese">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ko">
+          
+          <img src="https://cdn.countryflags.com/thumbs/south-korea/flag-400.png" title="Korean">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ru">
+          
+          <img src="https://cdn.countryflags.com/thumbs/russia/flag-400.png" title="Russian">
+          
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    autoDisplay: false,
+    layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+  }, 'google_translate_element');
+
+  // Links to cross-origin destinations are unsafe
+  var gll = document.getElementsByClassName('goog-logo-link')[0];
+  if (gll) {
+    gll.setAttribute('rel', 'noopener');
+  }
+
+  function restoreLang() {
+    var iframe = document.getElementsByClassName('goog-te-banner-frame')[0];
+    if (!iframe) return;
+
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    var restore_el = innerDoc.getElementsByTagName("button");
+
+    for (var i = 0; i < restore_el.length; i++) {
+      if (restore_el[i].id.indexOf("restore") >= 0) {
+        restore_el[i].click();
+        var close_el = innerDoc.getElementsByClassName("goog-close-link");
+        close_el[0].click();
+        return;
+      }
+    }
+  }
+
+  function triggerHtmlEvent(element, eventName) {
+    var event;
+    if (document.createEvent) {
+      event = document.createEvent('HTMLEvents');
+      event.initEvent(eventName, true, true);
+      element.dispatchEvent(event);
+    } else {
+      event = document.createEventObject();
+      event.eventType = eventName;
+      element.fireEvent('on' + event.eventType, event);
+    }
+  }
+
+  var googleCombo = document.querySelector("select.goog-te-combo");
+  var langSelect = document.querySelector('.ct-language');
+  langSelect.addEventListener('click', function(event) {
+    if (!event.target) {
+      return;
+    }
+
+    var selected = document.querySelector('.ct-language .ct-language-selected');
+    if (selected) {
+      selected.classList.remove('ct-language-selected');
+    }
+
+    var target = event.target;
+    while (target && target !== langSelect ) {
+      if (target.matches('.lang-select')) {
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (target && target.matches('.lang-select')) {
+      var lang = target.getAttribute('data-lang');
+      if (googleCombo.value == lang) {
+        restoreLang();
+      } else {
+        target.parentElement.classList.add('ct-language-selected');
+        googleCombo.value = lang;
+        triggerHtmlEvent(googleCombo, 'change');
+      }
+    }
+
+    event.preventDefault();
+  });
+}
+</script>
+
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+</div>
+</div>
+        </nav>
+</div>
+  </div>
+</header>
+
+<script>
+  function initHeader() {
+    var lastScrollY = getScrollPos().y;
+    var documentElement = document.documentElement;
+
+    function storeScrollData() {
+      var y = getScrollPos().y;var scrollStatus = "";
+
+      if (y <= 0) {
+        scrollStatus = "top";
+      } else if ((window.innerHeight + y) >= document.body.offsetHeight) {
+        scrollStatus = "bottom";
+      } else {
+        var isScrollDown = (y - lastScrollY > 0) ? true : false;
+        scrollStatus = isScrollDown ? "down" : "up";
+      }
+
+      lastScrollY = y;
+      documentElement.setAttribute("data-scroll-status", scrollStatus);
+    }
+
+    window.addEventListener('scroll', function(e) {
+      storeScrollData();
+    });
+
+    storeScrollData();
+  }
+  document.addEventListener('DOMContentLoaded', initHeader);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  function hashLocate(hashValue) {
+    hashValue = hashValue.replace(/^.*#h-/, '');
+    hashValue = decodeURIComponent(hashValue);
+    var element = document.getElementById(hashValue);
+
+    if (!element) {
+      return;
+    }
+
+    var header = document.querySelector('header.site-header');
+    var headerRect = header.getBoundingClientRect();
+    var headerTop = Math.floor(headerRect.top);
+    var headerHeight = Math.floor(headerRect.height);
+    var scrollPos = getScrollPos();
+    var offsetY = element.offsetTop - (headerTop + headerHeight + 20);
+
+    if (offsetY == scrollPos.y) {
+      return;
+    }
+
+    if (headerTop == 0  && offsetY > scrollPos.y) {
+      offsetY += headerHeight + 2;
+    } else if (headerTop < 0  && offsetY < scrollPos.y) {
+      offsetY -= headerHeight - 2;
+    }
+
+    smoothScrollTo(offsetY);
+  }
+
+  // The first event occurred
+  window.addEventListener('load', function(event) {
+    if (window.location.hash) {
+      hashLocate(window.location.hash);
+    }
+  });
+
+  // The first event occurred
+  window.addEventListener('click', function(event) {
+    if (event.target.tagName.toLowerCase() == 'a') {
+      hashLocate(event.target.getAttribute('href'));
+    }
+  });
+</script>
+<div class="theme-toggle">
+  <input type="checkbox" id="theme-switch">
+  <label for="theme-switch">
+    <div class="toggle"></div>
+    <div class="names">
+      <p class="light">Light</p>
+      <p class="dark">Dark</p>
+    </div>
+  </label>
+</div>
+
+
+
+
+<script>
+  (function() {
+    var sw = document.getElementById('theme-switch');
+    var html = document.getElementsByTagName('html')[0];
+    var nightModeOption = ('manual' || 'auto').toLowerCase();
+    var storage = nightModeOption === 'manual'
+        ? localStorage
+        : sessionStorage;
+    var themeData = loadThemeData();
+
+    function saveThemeData(data) {
+      storage.setItem('theme', JSON.stringify(data));
+    }
+
+    function loadThemeData() {
+      var data = storage.getItem('theme');
+      try {
+        data = JSON.parse(data ? data : '');
+      } catch(e) {
+        data = { nightShift: undefined, autoToggleAt: 0 };
+        saveThemeData(data);
+      }
+      return data;
+    }
+
+    function handleThemeToggle(nightShift) {
+      themeData.nightShift = nightShift;
+      saveThemeData(themeData);
+      html.dataset.theme = nightShift ? 'dark' : 'light';
+      setTimeout(function() {
+        sw.checked = nightShift ? true : false;
+        document.dispatchEvent(new Event('theme-changed'));
+      }, 50);
+    }
+
+    function autoThemeToggle() {
+      // Next time point of theme toggle
+      var now = new Date();
+      var toggleAt = new Date();
+      var hours = now.getHours();
+      var nightShift = hours >= 19 || hours <=7;
+
+      if (nightShift) {
+        if (hours > 7) {
+          toggleAt.setDate(toggleAt.getDate() + 1);
+        }
+        toggleAt.setHours(7);
+      } else {
+        toggleAt.setHours(19);
+      }
+
+      toggleAt.setMinutes(0);
+      toggleAt.setSeconds(0);
+      toggleAt.setMilliseconds(0)
+
+      var delay = toggleAt.getTime() - now.getTime();
+
+      // auto toggle theme mode
+      setTimeout(function() {
+        handleThemeToggle(!nightShift);
+      }, delay);
+
+      return {
+        nightShift: nightShift,
+        toggleAt: toggleAt.getTime()
+      };
+    }
+
+    // Listen the theme toggle event
+    sw.addEventListener('change', function(event) {
+      handleThemeToggle(event.target.checked);
+    });
+
+    if (nightModeOption == 'auto') {
+      var data = autoThemeToggle();
+
+      // Toggle theme by local setting
+      if (data.toggleAt > themeData.autoToggleAt) {
+        themeData.autoToggleAt = data.toggleAt;
+        handleThemeToggle(data.nightShift);
+      } else {
+        handleThemeToggle(themeData.nightShift);
+      }
+    } else if (nightModeOption == 'manual') {
+      handleThemeToggle(themeData.nightShift);
+    } else {
+      var nightShift = themeData.nightShift;
+      if (nightShift === undefined) {
+        nightShift = nightModeOption === 'on';
+      }
+      handleThemeToggle(nightShift);
+    }
+  })();
+</script>
+<div id="click-to-top" class="click-to-top">
+  <i class="fa fa-arrow-up"></i>
+</div>
+<script>
+  (function () {
+    const clickToTop = document.getElementById('click-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        clickToTop.classList.add('show')
+      }else {
+        clickToTop.classList.remove('show')
+      }
+    });
+    clickToTop.addEventListener('click', () => {
+      window.smoothScrollTo(0);
+    });
+  })();
+</script>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="framework">
+  <section class="main">
+
+     <div class="post">
+  <section>
+
+
+
+
+
+
+
+
+
+<header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">KSQLDB Stream &amp; Table</h1>
+  <h2 class="post-subtitle"></h2>
+
+  <div class="post-meta">
+    <time class="dt-published" datetime="2024-10-09T00:00:00+00:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Oct 09, 2024
+    </time><span class="post-author left-vsplit"><i class="fa fa-pencil"></i> Hyunjune</span>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 6 mins</span>
+  </div>
+<div class="post-tags">
+<a class="post-tag" href="/tags.html#ksqldb">#ksqldb</a><a class="post-tag" href="/tags.html#stream">#stream</a><a class="post-tag" href="/tags.html#table">#table</a><a class="post-tag" href="/tags.html#pull%20query">#pull query</a><a class="post-tag" href="/tags.html#push%20query">#push query</a>
+</div></header>
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <div class="post-content e-content" itemprop="articleBody">
+
+      
+<h3 id="stream-개요">Stream 개요</h3>
+<ul>
+  <li>stream은 메시지 streaming 처리를 위해서 추상화한 layer</li>
+</ul>
+
+<p><img src="https://imucoding.github.io/assets/images/stream1.png" alt="img.png"></p>
+
+<ul>
+  <li>변경 불가하며 append만 가능한 collection</li>
+  <li>연속된 historical 정보 표현</li>
+  <li>insert된 row는 변경 불가하며 (update, delete 불가) 새로 insert된 row는 stream의 마지막에 추가됨</li>
+  <li>stream은 key를 가질 수도 그렇지 않을 수도 있으며 동일한 key 값을 가진 row는 동일한 파티션에 저장됨</li>
+</ul>
+
+<h4 id="stream--table-연속-처리">Stream / Table 연속 처리</h4>
+<ul>
+  <li>stream과 table은 topic을 source로 할 수 있으며, 다른 stream 또는 table을 source로 입력 받아 연속적인 processing 가능</li>
+</ul>
+
+<p><br></p>
+
+<h3 id="stream과-table-차이">Stream과 Table 차이</h3>
+<ul>
+  <li>stream은 key 값의 중복 여부와 상관 없이 연속적으로 메시지 관리 (stateless)</li>
+  <li>table은 primary key로 중복을 허용하지 않으며 동일 primary key로 메시지가 입력될 경우 해당 값을 업데이트 함 (stateful)</li>
+</ul>
+
+<p><img src="https://imucoding.github.io/assets/images/streamtable.png" alt="img.png"></p>
+
+<h4 id="실습">실습</h4>
+<p>토픽 생성</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kafka-topics --bootstrap-server localhost:9092 --create --topic simple_user_stream
+</code></pre></div></div>
+<p>토픽에 메시지 전송</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kafka-console-producer --bootstrap-server localhost:9092 --topic simple_user_stream
+
+&gt; {"id":1, "name":"name1", "email":"email1"}
+{"id":2, "name":"name2", "email":"email2"}
+{"id":3, "name":"name3", "email":"email3"}
+{"id":4, "name":"name4", "email":"email4"}
+</code></pre></div></div>
+<p>stream 생성 및 select로 스트림 조회</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>create stream simple_user_stream
+(
+  id int,
+  name varchar,
+  email varchat
+) with
+(
+  kafka_topic = 'simple_user_stream',
+  value_format = 'JSON'
+);
+
+select * from simple_user_stream;
+</code></pre></div></div>
+<ul>
+  <li>with 절은 topic과 format에 대한 설정 부과 가능</li>
+  <li>만약 기존 토픽이 없는 경우 새롭게 생성하는데 이 때 반드시 with 절에 partitions 옵션으로 파티션 개수 지정해야함
+    <div class="language-plaintext highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code>show streams;  // stream 목록 확인
+drop stream simple_user_stream delete topic; // stream 삭제하며 topic 함께 삭제
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<h4 id="key를-가지는-stream-생성">key를 가지는 stream 생성</h4>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>create stream simple_user_stream
+(
+  id int key,
+  name varchar,
+  email varchar
+) with (
+  kafka_topic = 'simple_user_stream',
+  key_format = 'KAFKA',
+  value_format = 'JSON',
+  partitions = 1
+);
+</code></pre></div></div>
+<ul>
+  <li>ksqlDB는 여러가지 직렬화 포맷으로 topic 메시지를 읽고 쓸 수 있음</li>
+  <li>직렬화 포맷은 key, value 각각에 별도로 지정 가능, 만약 동일하다면 <code class="language-plaintext highlighter-rouge">format</code>으로 지정 가능</li>
+</ul>
+
+<p><img src="https://imucoding.github.io/assets/images/serializationformat.png" alt="img.png"></p>
+<ul>
+  <li>직렬화 포맷 유형
+    <ul>
+      <li>
+<code class="language-plaintext highlighter-rouge">KAFKA</code> : number(Integer, Float 등)과 String 등의 primitive 직렬화에 사용되며 보통 key 직렬화 포맷으로 사용</li>
+      <li>
+<code class="language-plaintext highlighter-rouge">JSON</code> : json 포맷 직렬화</li>
+      <li>
+<code class="language-plaintext highlighter-rouge">AVRO</code> : avro 포맷 직렬화. schema registry 사용 필요</li>
+      <li>
+<code class="language-plaintext highlighter-rouge">DELIMITED</code> : csv 포맷 직렬화</li>
+      <li>
+<code class="language-plaintext highlighter-rouge">PROTOBUF</code> : protocol buffer 형태 직렬화</li>
+    </ul>
+  </li>
+</ul>
+
+<p><br></p>
+
+<h3 id="pull-쿼리와-push-쿼리">Pull 쿼리와 Push 쿼리</h3>
+<h4 id="pull-쿼리">Pull 쿼리</h4>
+<ul>
+  <li>쿼리를 실행한 시점에, 쿼리 조건에 맞는 데이터를 KSQLDB에서 가져옴. 한번 수행 후 쿼리 종료됨
+<code class="language-plaintext highlighter-rouge">select * from stream;</code>
+</li>
+</ul>
+
+<h4 id="push-쿼리">Push 쿼리</h4>
+<ul>
+  <li>쿼리 실행 이후 지속적으로 stream / table을 모니터링 하면서 쿼리 조건에 맞는 데이터가 추가 (변경) 되었을 때마다 데이터를 계속 가져옴</li>
+  <li>종료 시그널을 주지 않는 이상 쿼리가 종료되지 않음
+    <div class="language-plaintext highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code> select * from stream emit changes;
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<h4 id="pull-쿼리-제약">Pull 쿼리 제약</h4>
+<ul>
+  <li>stream에 group by 적용 시 pull 쿼리 수행 불가
+    <ul>
+      <li>stream은 stateful한 처리 없이 append만 수행하여 데이터가 엄청 많은데 쿼리 날릴 때마다 group by (stateful)한 처리를 수행하면 성능 이슈 발생</li>
+    </ul>
+  </li>
+  <li>topic을 source로 하는 table에 pull 쿼리 수행 불가
+    <ul>
+      <li>table이 source를 topic으로 하는 경우 mview가 아니므로 쿼리 수행 시점에 rocksdb 인스턴스가 새로 떠서 작업 처리함. 따라서 pull 쿼리와 같이 빈도가 잦은 쿼리는 rocksdb에 부담</li>
+    </ul>
+  </li>
+  <li>pull 쿼리는 수행 시 마다 새로운 consumer group과 consumer가 생성되고 종료됨</li>
+  <li>push 쿼리는 쿼리가 유지되는 동안 계속 consumer group과 consumer가 유지됨</li>
+</ul>
+
+<h4 id="ksql-cli">KSQL CLI</h4>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>show topics;
+set 'auto.offset.reset` = 'earliest';
+print user_stream from beginning;
+</code></pre></div></div>
+<ul>
+  <li>토픽 및 메시지 확인
+    <div class="language-plaintext highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code>describe user_stream extended;
+</code></pre></div>    </div>
+  </li>
+  <li>stream / table의 DDL, 데이터 타입 등 주요 메타 정보 확인 가능</li>
+</ul>
+
+<h4 id="query와-consumer-동작">Query와 Consumer 동작</h4>
+<p><img src="https://imucoding.github.io/assets/images/queryconsumer.png" alt="img.png"></p>
+
+<ul>
+  <li>쿼리는 수행 상태를 가짐</li>
+  <li>동일한 쿼리더라도 select / insert로 수행되는 쿼리는 서로 다른 ID를 가짐</li>
+  <li>mview에서 사용되는 CSAS, CTAS 쿼리는 동일한 쿼리일 경우 동일한 ID를 가짐</li>
+</ul>
+
+<h4 id="pull-쿼리와-push-쿼리-활용도">Pull 쿼리와 Push 쿼리 활용도</h4>
+<ul>
+  <li>pull 쿼리는 ksql CLI나 application에서 최종 데이터 추출하는데 사용</li>
+  <li>push 쿼리는 materialized view에 변경된 데이터를 반영하는 데 주로 사용 (CLI 기반 조회도 가능)</li>
+</ul>
+
+<h4 id="alter-ddl">ALTER DDL</h4>
+<ul>
+  <li>ksqlDB는 컬럼의 변경, 삭제를 허용하지 않고 오직 컬럼의 추가만 허용</li>
+  <li>ksqlDB의 컬럼은 무조건 nullable이며 not null 제약 조건 부여 불가하지만 table의 경우 primary key에 대해서는 not null 묵시적 적용
+    <div class="language-plaintext highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code>alter stream user_stream add column phone varchar;
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<p><br></p>
+
+<h3 id="table-생성하기">Table 생성하기</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>create table user_table
+(
+  id int primary key,
+  name varchar,
+  email varchar
+) with
+(
+  kafka_topic = 'user_table',
+  key_format = 'KAFKA',
+  value_format = 'JSON',
+  partitions = 1
+);
+</code></pre></div></div>
+
+<h4 id="topic을-소스로-가지는-table에서-rocksdb-메커니즘">Topic을 소스로 가지는 Table에서 RocksDB 메커니즘</h4>
+<p><img src="https://imucoding.github.io/assets/images/tablerocksdb.png" alt="img.png"></p>
+
+<ul>
+  <li>push 쿼리 수행 시 rocksDB가 기동되어 stateful SQL 수행</li>
+  <li>rocksDB instance는 쿼리 생성 시 생성되었다가 쿼리가 끝나면 종료됨</li>
+  <li>change log는 push 쿼리 수행 중에 데이터 변경 사항을 내부 토픽으로 가지며 rocksDB의 복구 시 사용</li>
+  <li>rocksDB의 기본 storage 디렉토리는 <code class="language-plaintext highlighter-rouge">/tmp/kafka-streams</code>이며  <code class="language-plaintext highlighter-rouge">ksql.streams.state.dir</code> 설정으로 변경 가능</li>
+  <li>쿼리 종료 시 change 내부 토픽 및 rocksDB 파일 모두 삭제됨</li>
+</ul>
+
+<p><br></p>
+
+<h3 id="date--time--timestamp-타입-설명">DATE / TIME / TIMESTAMP 타입 설명</h3>
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">DATE</code> : 시분초를 제외한 월일년만 가지는 temporal 타입 (2023-02-01)</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">TIME</code> : 월일년을 제외한 시분초만 가지는 temporal 타입 (11:59:59)</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">TIMESTAMP</code> : 월일년 시분초, 밀리세컨드까지 가지는 temporal 타입 (2023-02-01 11:59:59.010)</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">Time Units</code> : temporal 관련 함수나 windows 절에서 사용되는 time unit
+    <ul>
+      <li>DAYS / HOURS / MINUTES / SECONDS / MILLISECONDS 등</li>
+    </ul>
+  </li>
+  <li>RDBMS와 달리 datetime은 없음</li>
+</ul>
+
+<h4 id="문자열-변환-함수">문자열 변환 함수</h4>
+<ul>
+  <li>temporal 타입을 문자열로 변경할 때는 FORMAT_XXX() 함수를, 문자열을 temporal 타입으로 변경할 떄는 PARSE_XXX() 함수를 사용</li>
+  <li>temporal에서 문자열 변환
+    <ul>
+      <li>FORMAT_DATE(Date, ‘yyyy-MM-dd’)</li>
+      <li>FORMAT_TIME(Time, ‘HH:mm:ss’)</li>
+      <li>FORMAT_TIMESTAMP(Timestamp, ‘yyyy-MM-dd HH:mm:ss’)</li>
+    </ul>
+  </li>
+  <li>문자열에서 temporal 변환
+    <ul>
+      <li>PARSE_DATE(‘2023-02-01’, ‘yyyy-MM-dd’)</li>
+      <li>PARSE_TIME(‘11:59:59’, ‘HH:mm:ss’)</li>
+      <li>PARSE_TIMESTAMP(‘2023-02-01 11:59:59’, ‘yyyy-MM-dd HH:mm:ss’)</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="unix-epoch-일자--milliseconds-값-변환">Unix epoch 일자 / Milliseconds 값 변환</h4>
+<ul>
+  <li>Date / Timestamp 값을 int / big int 형 unix epoch 일자 / Milliseconds 값으로 변환할 경우 UNIX_XXX() 함수를 사용</li>
+  <li>int / big int 형 unix epoch 일자 / Milliseconds 값을 Date / Time 값으로 변환할 때는 FROM_XXX() 사용</li>
+  <li>unix epoch 일자 / milliseconds 값으로 변환
+    <ul>
+      <li>UNIX_DATE(Date)</li>
+      <li>UNIX_TIMESTAMP(Timestamp)</li>
+    </ul>
+  </li>
+  <li>Date / Timestamp 값으로 변환
+    <ul>
+      <li>FROM_DAYS(unix epoch 일자)</li>
+      <li>FROM_UNIXTIME(unix epoch milliseconds)</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="더하기--빼기-연산">더하기 / 빼기 연산</h4>
+<ul>
+  <li>temporal 값에 일정 time unit을 더하고 빼기 위해서 DATEADD() 등의 함수가 지원됨
+    <ul>
+      <li>time unit : DAYS / HOURS / MINUTES / SECONDS / MILLISECONDS</li>
+    </ul>
+  </li>
+  <li>DATEADD(time units, 기간, Date 컬럼명)과 같이 사용될 수 있으며 DATEADD는 DAYS만 사용 가능</li>
+  <li>더하기
+    <ul>
+      <li>DATEADD(DAYS, 7, Date)</li>
+      <li>TIMEADD(HOURS, 7 Time)</li>
+      <li>TIMESTAMPADD(MINUTES, 10, Timestamp)</li>
+    </ul>
+  </li>
+  <li>빼기
+    <ul>
+      <li>DATESUB(DAYS, 7, Date)</li>
+      <li>TIMESUB(HOURS, 7 Time)</li>
+      <li>TIMESTAMPSUB(MINUTES, 10, Timestamp)</li>
+    </ul>
+  </li>
+</ul>
+
+
+
+    </div>
+
+</article>
+<div class="post-nav">
+<a class="previous" href="/kafka/2024/10/08/ksqldb-1.html" title="KSQLDB 개요">
+          <div>KSQLDB 개요</div>
+        </a><a class="next" href="/media/2026/04/25/timecode-driven-multi-source-synchronization.html" title="Timecode-driven Multi-source Synchronization">
+          <div>Timecode-driven Multi-source Synchronization</div>
+        </a>
+</div>
+<div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li class="">
+          <a class="post-link" href="/kafka/2024/08/12/leaderelection.html" title="Preferred, Unclean Leader Election">
+            Preferred, Unclean Leader Election<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="">
+          <a class="post-link" href="/kafka/2024/08/15/log-cleanup-policy.html" title="Log Cleanup Policy">
+            Log Cleanup Policy<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="">
+          <a class="post-link" href="/kafka/2024/08/31/kafka-connect.html" title="Kafka Connect 개요">
+            Kafka Connect 개요<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="">
+          <a class="post-link" href="/kubernetes/2024/08/01/kuberneter-helml.html" title="헬름을 이용한 애플리케이션 패키징 및 관리">
+            헬름을 이용한 애플리케이션 패키징 및 관리<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+</ul>
+    </div>
+<div class="post-comments"></div></section>
+</div>
+
+
+  </section>
+  <section class="sidebar" style="margin-left: 15px;">
+    <!-- Get sidebar items --><style type="text/css" media="screen">
+.post-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+</style>
+
+<div class="post-menu">
+  <div class="post-menu-title">TOC</div>
+  <div class="post-menu-content"></div>
+</div>
+
+<script>
+  function generateContent() {
+    var menu = document.querySelector(".post-menu");
+    var menuContent =  menu.querySelector(".post-menu-content");
+    var headings = document.querySelector(".post-content").querySelectorAll("h2, h3, h4, h5, h6");
+
+    // Hide menu when no headings
+    if (headings.length === 0) {
+      return menu.style.display = "none";
+    }
+
+    // Generate post menu
+    var menuHTML = '';
+    for (var i = 0; i < headings.length; i++) {
+      var h = headings[i];
+      menuHTML += (
+        '<li class="h-' + h.tagName.toLowerCase() + '">'
+        + '<a href="#h-' + h.getAttribute('id') + '">' + h.textContent + '</a></li>');
+    }
+
+    menuContent.innerHTML = '<ul>' + menuHTML + '</ul>';
+
+    // The header element
+    var header = document.querySelector('header.site-header');
+
+    function doMenuCollapse(index, over_items) {
+      var items = menuContent.firstChild.children;
+
+      if (over_items == undefined) {
+        over_items = 20;
+      }
+
+      if (items.length < over_items) {
+        return;
+      }
+
+      var activeItem = items[index];
+      var beginItem = activeItem
+      var endItem = activeItem
+      var beginIndex = index;
+      var endIndex = index + 1;
+      while (beginIndex >= 0
+        && !items[beginIndex].classList.contains('h-h2')) {
+        beginIndex -= 1;
+      }
+      while (endIndex < items.length
+        && !items[endIndex].classList.contains('h-h2')) {
+        endIndex += 1;
+      }
+      for (var i = 0; i < beginIndex; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+      for (var i = beginIndex + 1; i < endIndex; i++) {
+        item = items[i]
+        // if (!item.classList.contains('h-h2')) {
+          item.style.display = '';
+        // }
+      }
+      for (var i = endIndex; i < items.length; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+    }
+
+    // Init menu collapsed
+    doMenuCollapse(-1);
+
+    // Active the menu item
+    window.addEventListener('scroll', function (event) {
+      var lastActive = menuContent.querySelector('.active');
+      var changed = true;
+      var activeIndex = -1;
+      for (var i = headings.length - 1; i >= 0; i--) {
+        var h = headings[i];
+        var headingRect = h.getBoundingClientRect();
+        var headerRect = header.getBoundingClientRect();
+        var headerTop = Math.floor(headerRect.top);
+        var headerHeight = Math.floor(headerRect.height);
+        var headerHeight = headerTop + headerHeight + 20;
+        if (headingRect.top <= headerHeight) {
+          var id = 'h-' + h.getAttribute('id');
+          var a = menuContent.querySelector('a[href="#' + id  + '"]');
+          var curActive = a.parentNode;
+          if (curActive) {
+            curActive.classList.add('active');
+            activeIndex = i;
+          }
+          if (lastActive == curActive) {
+            changed = false;
+          }
+          break;
+        }
+      }
+      if (changed) {
+        if (lastActive) {
+          lastActive.classList.remove('active');
+        }
+        doMenuCollapse(activeIndex);
+      }
+      event.preventDefault();
+    });
+  }
+  generateContent();
+</script>
+</section>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+    <div class="site-footer-inner">
+<div>Unpublished Work <span class="copyleft">©</span> 2023-2026 hyunjune</div>
+      <div class="footer-col rss-subscribe">Subscribe <a href="/feed.xml">via RSS</a>
+</div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

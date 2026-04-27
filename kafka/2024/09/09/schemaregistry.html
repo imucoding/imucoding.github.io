@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Schema Registry | IMU TECH BLOG</title>
+<meta name="generator" content="Jekyll v4.4.1">
+<meta property="og:title" content="Schema Registry">
+<meta name="author" content="Hyunjune">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="Schema Registry confluent kafka는 schema registry를 통해 schema 정보를 별도로 관리하는 기능 제공 토픽으로 전송되는 data의 schema는 schema registry에서 ID + version 별로 중앙 관리 되므로 레코드 별로 schema를 중복해서 전송할 필요가 없음">
+<meta property="og:description" content="Schema Registry confluent kafka는 schema registry를 통해 schema 정보를 별도로 관리하는 기능 제공 토픽으로 전송되는 data의 schema는 schema registry에서 ID + version 별로 중앙 관리 되므로 레코드 별로 schema를 중복해서 전송할 필요가 없음">
+<link rel="canonical" href="https://imucoding.github.io/kafka/2024/09/09/schemaregistry.html">
+<meta property="og:url" content="https://imucoding.github.io/kafka/2024/09/09/schemaregistry.html">
+<meta property="og:site_name" content="IMU TECH BLOG">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2024-09-09T00:00:00+00:00">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="Schema Registry">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Hyunjune"},"dateModified":"2024-09-09T00:00:00+00:00","datePublished":"2024-09-09T00:00:00+00:00","description":"Schema Registry confluent kafka는 schema registry를 통해 schema 정보를 별도로 관리하는 기능 제공 토픽으로 전송되는 data의 schema는 schema registry에서 ID + version 별로 중앙 관리 되므로 레코드 별로 schema를 중복해서 전송할 필요가 없음","headline":"Schema Registry","mainEntityOfPage":{"@type":"WebPage","@id":"https://imucoding.github.io/kafka/2024/09/09/schemaregistry.html"},"url":"https://imucoding.github.io/kafka/2024/09/09/schemaregistry.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="icon" href="">
+  <link rel="canonical" href="https://imucoding.github.io">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-noto-sans@0.0.72/index.min.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <script src="/assets/js/main.js"></script><link type="application/atom+xml" rel="alternate" href="https://imucoding.github.io/feed.xml" title="IMU TECH BLOG">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/languages/go.min.js" async></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// Init highlight js
+document.addEventListener('DOMContentLoaded', function(event) {
+  var els = document.querySelectorAll('pre code')
+
+  function addLangData(block) {
+    var outer = block.parentElement.parentElement.parentElement;
+    var lang = block.getAttribute('data-lang');
+    for (var i = 0; i < outer.classList.length; i++) {
+      var cls = outer.classList[i];
+      if (cls.startsWith('language-')) {
+        lang = cls;
+        break;
+      }
+    }
+    if (!lang) {
+      cls = block.getAttribute('class');
+      lang = cls ? cls.replace('hljs ', '') : '';
+    }
+    if (lang.startsWith('language-')) {
+      lang = lang.substr(9);
+    }
+    block.setAttribute('class', 'hljs ' + lang);
+    block.parentNode.setAttribute('data-lang', lang);
+  }
+
+  function addBadge(block) {
+    var enabled = ('true' || 'true').toLowerCase();
+    if (enabled == 'true') {
+      var pre = block.parentElement;
+      pre.classList.add('badge');
+    }
+  }
+
+  function handle(block) {
+    addLangData(block);
+    addBadge(block)
+    hljs.highlightBlock(block);
+  }
+
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    handle(el);
+  }
+});
+</script>
+
+<style>
+  /* code language badge */
+  pre.badge::before {
+    content: attr(data-lang);
+    color: #fff;
+    background-color: #ff4e00;
+    padding: 0 .5em;
+    border-radius: 0 2px;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 32px;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+  }
+
+  /* fix wrong badge display for firefox browser */
+  code > table pre::before {
+    display: none;
+  }
+</style>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe-lightbox.umd.min.js" async></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe.umd.min.js" async></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe.min.css" rel="stylesheet">
+<style>
+  .pswp .pswp__container .pswp__img {
+    background-color: white;
+  }
+</style>
+
+<script>
+  function initPhotoSwipe() {
+    let customOptions = {};
+
+    try {
+      const data = ``.replaceAll("=>", ":");
+      customOptions = JSON.parse(data);
+    } catch (e) {
+      console.info("Invalid custom photo previewer options! " + e.message);
+    }
+
+    // Define object and gallery options
+    const options = Object.assign(
+      {
+        gallery: "section.main",
+        children: "a.photo-swipe",
+        photo_scale: 2,
+        // dynamic import is not supported in UMD version
+        pswpModule: PhotoSwipe,
+      },
+      customOptions
+    );
+
+    const galleryEl = document.querySelector(options.gallery);
+    if (!galleryEl) {
+      return;
+    }
+
+    const imgEls = [];
+    const els = galleryEl.querySelectorAll("img:not(.emoji)");
+    els.forEach((el) => {
+      if (el.src.trim() == "") {
+        return;
+      }
+      if (!imgEls.includes(el)) {
+        imgEls.push(el);
+      }
+    });
+
+    if (imgEls.length === 0) {
+      return;
+    }
+
+    imgEls.forEach((imgEl) => {
+      imgEl.outerHTML = `
+      <a class="photo-swipe"
+        href="${imgEl.src}"
+        data-pswp-width="${
+          Math.max(imgEl.naturalWidth, imgEl.width) * options.photo_scale
+        }"
+        data-pswp-height="${
+          Math.max(imgEl.naturalHeight, imgEl.height) * options.photo_scale
+        }"
+        data-pswp-caption="${imgEl.getAttribute("caption") || imgEl.alt}"
+        target="_blank">
+        ${imgEl.outerHTML}
+      </a>`;
+    });
+
+    // Initialize PhotoSwipe 5
+    var lightbox = new PhotoSwipeLightbox(options);
+
+    lightbox.init();
+  }
+
+  window.addEventListener("load", initPhotoSwipe);
+</script>
+
+<meta name="google-site-verification" content="d_7fHqoWfEPFWDaXJ19fg2f5xy6BPZbrY4fbsJjIUSI">
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="site-header " role="banner">
+
+  <div class="wrapper">
+    <div class="site-header-inner">
+<span class="site-brand"><a class="site-brand-inner" rel="author" href="/">
+  <img class="site-favicon" title="IMU TECH BLOG" src="" onerror="this.style.display='none'">
+  IMU TECH BLOG
+</a>
+</span><nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger">
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewbox="0 0 18 15" width="18px" height="15px">
+                <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"></path>
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger">
+<a class="page-link" href="/about.html">ABOUT</a><a class="page-link" href="/archives.html">ARCHIVES</a><a class="page-link" href="/categories.html">CATEGORIES</a><a class="page-link" href="/">HOME</a><a class="page-link" href="/tags.html">TAGS</a>
+
+
+
+
+
+
+
+
+
+<div class="page-link" style="display: inline;">
+
+
+
+<div id="google_translate_element" style="display: none;">
+</div>
+
+<div class="ct-language">
+  <ul class="list-unstyled ct-language-dropdown">
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="en">
+          
+          <img src="https://cdn.countryflags.com/thumbs/united-states-of-america/flag-400.png" title="English">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="fr">
+          
+          <img src="https://cdn.countryflags.com/thumbs/france/flag-400.png" title="French">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="zh-CN">
+          
+          <img src="https://cdn.countryflags.com/thumbs/china/flag-400.png" title="Chinese(Simple)">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ja">
+          
+          <img src="https://cdn.countryflags.com/thumbs/japan/flag-400.png" title="Japanese">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ko">
+          
+          <img src="https://cdn.countryflags.com/thumbs/south-korea/flag-400.png" title="Korean">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ru">
+          
+          <img src="https://cdn.countryflags.com/thumbs/russia/flag-400.png" title="Russian">
+          
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    autoDisplay: false,
+    layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+  }, 'google_translate_element');
+
+  // Links to cross-origin destinations are unsafe
+  var gll = document.getElementsByClassName('goog-logo-link')[0];
+  if (gll) {
+    gll.setAttribute('rel', 'noopener');
+  }
+
+  function restoreLang() {
+    var iframe = document.getElementsByClassName('goog-te-banner-frame')[0];
+    if (!iframe) return;
+
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    var restore_el = innerDoc.getElementsByTagName("button");
+
+    for (var i = 0; i < restore_el.length; i++) {
+      if (restore_el[i].id.indexOf("restore") >= 0) {
+        restore_el[i].click();
+        var close_el = innerDoc.getElementsByClassName("goog-close-link");
+        close_el[0].click();
+        return;
+      }
+    }
+  }
+
+  function triggerHtmlEvent(element, eventName) {
+    var event;
+    if (document.createEvent) {
+      event = document.createEvent('HTMLEvents');
+      event.initEvent(eventName, true, true);
+      element.dispatchEvent(event);
+    } else {
+      event = document.createEventObject();
+      event.eventType = eventName;
+      element.fireEvent('on' + event.eventType, event);
+    }
+  }
+
+  var googleCombo = document.querySelector("select.goog-te-combo");
+  var langSelect = document.querySelector('.ct-language');
+  langSelect.addEventListener('click', function(event) {
+    if (!event.target) {
+      return;
+    }
+
+    var selected = document.querySelector('.ct-language .ct-language-selected');
+    if (selected) {
+      selected.classList.remove('ct-language-selected');
+    }
+
+    var target = event.target;
+    while (target && target !== langSelect ) {
+      if (target.matches('.lang-select')) {
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (target && target.matches('.lang-select')) {
+      var lang = target.getAttribute('data-lang');
+      if (googleCombo.value == lang) {
+        restoreLang();
+      } else {
+        target.parentElement.classList.add('ct-language-selected');
+        googleCombo.value = lang;
+        triggerHtmlEvent(googleCombo, 'change');
+      }
+    }
+
+    event.preventDefault();
+  });
+}
+</script>
+
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+</div>
+</div>
+        </nav>
+</div>
+  </div>
+</header>
+
+<script>
+  function initHeader() {
+    var lastScrollY = getScrollPos().y;
+    var documentElement = document.documentElement;
+
+    function storeScrollData() {
+      var y = getScrollPos().y;var scrollStatus = "";
+
+      if (y <= 0) {
+        scrollStatus = "top";
+      } else if ((window.innerHeight + y) >= document.body.offsetHeight) {
+        scrollStatus = "bottom";
+      } else {
+        var isScrollDown = (y - lastScrollY > 0) ? true : false;
+        scrollStatus = isScrollDown ? "down" : "up";
+      }
+
+      lastScrollY = y;
+      documentElement.setAttribute("data-scroll-status", scrollStatus);
+    }
+
+    window.addEventListener('scroll', function(e) {
+      storeScrollData();
+    });
+
+    storeScrollData();
+  }
+  document.addEventListener('DOMContentLoaded', initHeader);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  function hashLocate(hashValue) {
+    hashValue = hashValue.replace(/^.*#h-/, '');
+    hashValue = decodeURIComponent(hashValue);
+    var element = document.getElementById(hashValue);
+
+    if (!element) {
+      return;
+    }
+
+    var header = document.querySelector('header.site-header');
+    var headerRect = header.getBoundingClientRect();
+    var headerTop = Math.floor(headerRect.top);
+    var headerHeight = Math.floor(headerRect.height);
+    var scrollPos = getScrollPos();
+    var offsetY = element.offsetTop - (headerTop + headerHeight + 20);
+
+    if (offsetY == scrollPos.y) {
+      return;
+    }
+
+    if (headerTop == 0  && offsetY > scrollPos.y) {
+      offsetY += headerHeight + 2;
+    } else if (headerTop < 0  && offsetY < scrollPos.y) {
+      offsetY -= headerHeight - 2;
+    }
+
+    smoothScrollTo(offsetY);
+  }
+
+  // The first event occurred
+  window.addEventListener('load', function(event) {
+    if (window.location.hash) {
+      hashLocate(window.location.hash);
+    }
+  });
+
+  // The first event occurred
+  window.addEventListener('click', function(event) {
+    if (event.target.tagName.toLowerCase() == 'a') {
+      hashLocate(event.target.getAttribute('href'));
+    }
+  });
+</script>
+<div class="theme-toggle">
+  <input type="checkbox" id="theme-switch">
+  <label for="theme-switch">
+    <div class="toggle"></div>
+    <div class="names">
+      <p class="light">Light</p>
+      <p class="dark">Dark</p>
+    </div>
+  </label>
+</div>
+
+
+
+
+<script>
+  (function() {
+    var sw = document.getElementById('theme-switch');
+    var html = document.getElementsByTagName('html')[0];
+    var nightModeOption = ('manual' || 'auto').toLowerCase();
+    var storage = nightModeOption === 'manual'
+        ? localStorage
+        : sessionStorage;
+    var themeData = loadThemeData();
+
+    function saveThemeData(data) {
+      storage.setItem('theme', JSON.stringify(data));
+    }
+
+    function loadThemeData() {
+      var data = storage.getItem('theme');
+      try {
+        data = JSON.parse(data ? data : '');
+      } catch(e) {
+        data = { nightShift: undefined, autoToggleAt: 0 };
+        saveThemeData(data);
+      }
+      return data;
+    }
+
+    function handleThemeToggle(nightShift) {
+      themeData.nightShift = nightShift;
+      saveThemeData(themeData);
+      html.dataset.theme = nightShift ? 'dark' : 'light';
+      setTimeout(function() {
+        sw.checked = nightShift ? true : false;
+        document.dispatchEvent(new Event('theme-changed'));
+      }, 50);
+    }
+
+    function autoThemeToggle() {
+      // Next time point of theme toggle
+      var now = new Date();
+      var toggleAt = new Date();
+      var hours = now.getHours();
+      var nightShift = hours >= 19 || hours <=7;
+
+      if (nightShift) {
+        if (hours > 7) {
+          toggleAt.setDate(toggleAt.getDate() + 1);
+        }
+        toggleAt.setHours(7);
+      } else {
+        toggleAt.setHours(19);
+      }
+
+      toggleAt.setMinutes(0);
+      toggleAt.setSeconds(0);
+      toggleAt.setMilliseconds(0)
+
+      var delay = toggleAt.getTime() - now.getTime();
+
+      // auto toggle theme mode
+      setTimeout(function() {
+        handleThemeToggle(!nightShift);
+      }, delay);
+
+      return {
+        nightShift: nightShift,
+        toggleAt: toggleAt.getTime()
+      };
+    }
+
+    // Listen the theme toggle event
+    sw.addEventListener('change', function(event) {
+      handleThemeToggle(event.target.checked);
+    });
+
+    if (nightModeOption == 'auto') {
+      var data = autoThemeToggle();
+
+      // Toggle theme by local setting
+      if (data.toggleAt > themeData.autoToggleAt) {
+        themeData.autoToggleAt = data.toggleAt;
+        handleThemeToggle(data.nightShift);
+      } else {
+        handleThemeToggle(themeData.nightShift);
+      }
+    } else if (nightModeOption == 'manual') {
+      handleThemeToggle(themeData.nightShift);
+    } else {
+      var nightShift = themeData.nightShift;
+      if (nightShift === undefined) {
+        nightShift = nightModeOption === 'on';
+      }
+      handleThemeToggle(nightShift);
+    }
+  })();
+</script>
+<div id="click-to-top" class="click-to-top">
+  <i class="fa fa-arrow-up"></i>
+</div>
+<script>
+  (function () {
+    const clickToTop = document.getElementById('click-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        clickToTop.classList.add('show')
+      }else {
+        clickToTop.classList.remove('show')
+      }
+    });
+    clickToTop.addEventListener('click', () => {
+      window.smoothScrollTo(0);
+    });
+  })();
+</script>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="framework">
+  <section class="main">
+
+     <div class="post">
+  <section>
+
+
+
+
+
+
+
+
+
+<header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">Schema Registry</h1>
+  <h2 class="post-subtitle"></h2>
+
+  <div class="post-meta">
+    <time class="dt-published" datetime="2024-09-09T00:00:00+00:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Sep 09, 2024
+    </time><span class="post-author left-vsplit"><i class="fa fa-pencil"></i> Hyunjune</span>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 13 mins</span>
+  </div>
+<div class="post-tags">
+<a class="post-tag" href="/tags.html#schema%20registry">#schema registry</a><a class="post-tag" href="/tags.html#backward">#backward</a><a class="post-tag" href="/tags.html#forward">#forward</a>
+</div></header>
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <div class="post-content e-content" itemprop="articleBody">
+
+      
+<h3 id="schema-registry">Schema Registry</h3>
+<ul>
+  <li>confluent kafka는 schema registry를 통해 schema 정보를 별도로 관리하는 기능 제공</li>
+  <li>토픽으로 전송되는 data의 schema는 schema registry에서 ID + version 별로 중앙 관리 되므로 레코드 별로 schema를 중복해서 전송할 필요가 없음</li>
+</ul>
+
+<p><img src="https://imucoding.github.io/assets/images/schemaregistry.png" alt="img.png"></p>
+
+<h4 id="schema-registry-역할">Schema Registry 역할</h4>
+<ul>
+  <li>schema 전송 없이 레코드 값만 kafka로 전송할 수 있게 해줌</li>
+  <li>kafka 메시지의 schema 제약 조건을 유지하면서 schema 변화에 대한 일정 수준 호환성을 제공</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="avro-개요-및-장점">Avro 개요 및 장점</h3>
+<ul>
+  <li>데이터 직렬화를 수행하는 시스템, 프레임워크</li>
+  <li>보다 컴팩트하고 빠른 binary 데이터 포맷 제공</li>
+  <li>json 포맷으로 쉽게 스키마 메시지를 정의</li>
+  <li>다양한 데이터 타입을 제공 (string, bytes, long, float, double, boolean 뿐만 아니라 enum, arrays, maps 등의 복잡한 데이터 타입도 지원)</li>
+</ul>
+
+<h4 id="메시지-포맷-비교">메시지 포맷 비교</h4>
+<p>Json (schemaless)</p>
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"user_id"</span><span class="p">:</span><span class="w"> </span><span class="mi">53</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"timestamp"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="mi">1232144232</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"address"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"경기도 성남시 ..."</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Schema + Avro payload</p>
+
+<p><img src="https://imucoding.github.io/assets/images/avro.png" alt="img.png"></p>
+<ul>
+  <li>avro payload는 바이너리 포맷이며 필드, 타입 정보 등이 포함되지 않음</li>
+  <li>json + schema 보다 훨씬 빠르며 스키마 레지스트리에 최적화</li>
+</ul>
+
+<p>Schema ID + Avro payload</p>
+
+<p><img src="https://imucoding.github.io/assets/images/schemaid.png" alt="img.png"></p>
+
+<p><br></p>
+<hr>
+
+<h3 id="avro-메시지를-kafka-utility로-보내고-읽기">Avro 메시지를 Kafka Utility로 보내고 읽기</h3>
+<ul>
+  <li>avro 메시지는 avro 이진 파일 형태로 변환 된 후 직렬화되므로 별도의  class인 AvroSerializer 이용해야 함</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">kafka-avro-console-producer</code>, <code class="language-plaintext highlighter-rouge">kafka-avro-console-consumer</code> 유틸리티를 이용하면 손쉽게 avro 메시지를 kafka 토픽 메시지로 전송하고 읽을 수 있음</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">kafka-avro-console-producer</code>, <code class="language-plaintext highlighter-rouge">kafka-avro-console-consumer</code>는 모두 <code class="language-plaintext highlighter-rouge">schema registry</code> 기반 동작함</li>
+</ul>
+
+<h4 id="avro와-json의-차이">Avro와 Json의 차이</h4>
+<ul>
+  <li>avro는 json 포맷의 schema 정보를 가지고 payload를 byte 값으로 가진 형태이고, json은 그 자체는 schema가 없지만 JsonSerializer 사용에 스키마 설정을 하면 record에 schema와 payload가 모두 json 형식으로 붙어서 생성됨</li>
+  <li>avro 사용 시 schema registry를 통해 schema를 따로 보관하고 schema ID + payload(byte)의 compact한 데이터로 전송이 가능</li>
+</ul>
+
+<h4 id="avro-메시지-전송-및-읽기">Avro 메시지 전송 및 읽기</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>avro 메시지 보내기
+
+kafka-avro-console-producer --broker-list localhost:9092 --topic avro-test --property value.schema=
+'
+ {
+    "type": "record",
+    "name": "customer_short",
+    "fields": [
+                {"name": "customer_id", "type": "int"},
+                {"name": "customer_name", "type": "string"}
+              ]
+ }
+'
+--property schema.registry.url=http://localhost:8081      
+
+# enter 이후 메시지 전송
+{ "customer_id" : 1, "customer_name" : "min"}
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>avro 메시지 읽기
+
+kafka-avro-console-consumer --bootstrap-server localhost:9092 --topic avro_test 
+--property schema.registry.url=http://localhost:8081 --from-beginning
+
+# 출력
+{ "customer_id" : 1, "customer_name" : "min"}
+</code></pre></div></div>
+
+<p><br></p>
+<hr>
+
+<h3 id="schema-registry-기반의-connector-설정">Schema Registry 기반의 Connector 설정</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>source connector 설정
+
+"key.converter" : "io.confluent.connect.avro.AvroConverter",
+"value.converter" : "io.confluent.connect.avro.AvroConverter",
+"key.converter.schema.registry.url" : "http://localhost:8081",
+"value.converter.schema.registry.url" : "http://localhost:8081",
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sink connector 설정
+
+"key.converter" : "io.confluent.connect.avro.AvroConverter",
+"value.converter" : "io.confluent.connect.avro.AvroConverter",
+"key.converter.schema.registry.url" : "http://localhost:8081",
+"value.converter.schema.registry.url" : "http://localhost:8081",
+</code></pre></div></div>
+
+<ul>
+  <li>source connector에서 database.server.name으로 지정한 이름으로 topic이 만들어지고 여기에는 source DB의 DDL 정보가 저장됨
+    <ul>
+      <li>sink connector의 소비 대상 아님</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="schema-registry-등록-주요-정보">Schema Registry 등록 주요 정보</h4>
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">subjects</code>
+    <ul>
+      <li>schema registry에 등록된 토픽 별 (또는 토픽 레코드 유형 별) 기준 정보
+        <ul>
+          <li>schema 정보가 subject 안에 있음</li>
+        </ul>
+      </li>
+      <li>subject 내의 스키마 호환성 체크</li>
+      <li>version은 subject 내에서 변경</li>
+      <li>schema가 진화할 때 동일한 subject에서 새로운 schema id와 version을 가짐</li>
+    </ul>
+  </li>
+  <li>
+<code class="language-plaintext highlighter-rouge">schemas</code> : schema 정보</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">config</code> : 전역 또는 subject 별 스키마 호환성 관련 정보 저장</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="rest-api를-통한-schema-registry-관리">REST API를 통한 Schema Registry 관리</h3>
+<ul>
+  <li>subject 및 config의 정보 추출 및 주요 속성에 대한 수정 / 변경 / 삭제 가능</li>
+  <li>가급적 delete는 자제. delete 수행 시 soft delete 이후 hard delete를 수행해야 완전 삭제</li>
+  <li>config는 subject 별로 별도 설정하지 않으면 전역 config를 그대로 따름</li>
+</ul>
+
+<h4 id="내부-토픽-_schemas-조회">내부 토픽 _schemas 조회</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kafkacat -b localhost:9092 -C -t _schemas -u -q | jq '.'
+</code></pre></div></div>
+<ul>
+  <li>토픽 별 key, value에 대한 스키마 정보가 저장됨</li>
+</ul>
+
+<h4 id="schema-registry에-등록된-모든-schema-정보-확인">schema registry에 등록된 모든 schema 정보 확인</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>http GET http://localhost:8081/schemas
+</code></pre></div></div>
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">_schemas</code>에 저장된 데이터 기반으로 가져옴</li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"schema"</span><span class="w"> </span><span class="p">:</span><span class="w"> 
+  </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"type"</span><span class="p">:</span><span class="s2">"record"</span><span class="p">,</span><span class="w"> 
+        </span><span class="nl">"name"</span><span class="p">:</span><span class="s2">"Key"</span><span class="p">,</span><span class="w"> 
+        </span><span class="nl">"namespace"</span><span class="p">:</span><span class="s2">"mysqlavro.oc.products"</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"fields"</span><span class="p">:[{</span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"product_id"</span><span class="p">,</span><span class="w"> </span><span class="nl">"type"</span><span class="p">:</span><span class="s2">"int"</span><span class="p">}],</span><span class="w">
+        </span><span class="nl">"connect.name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mysqlavro.oc.products-key"</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"version"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="w">
+</span><span class="p">}</span><span class="err">,</span><span class="w">
+
+</span><span class="p">{</span><span class="w">
+  </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"schema"</span><span class="w"> </span><span class="p">:</span><span class="w">
+  </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"type"</span><span class="p">:</span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"name"</span><span class="p">:</span><span class="s2">"Value"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"namespace"</span><span class="p">:</span><span class="s2">"mysqlavro.oc.products"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"fields"</span><span class="p">:[{</span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"product_id"</span><span class="p">,</span><span class="w"> </span><span class="nl">"type"</span><span class="p">:</span><span class="s2">"int"</span><span class="p">},</span><span class="w">
+              </span><span class="p">{</span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"product_name"</span><span class="p">,</span><span class="w"> </span><span class="nl">"type"</span><span class="p">:[</span><span class="s2">"null"</span><span class="p">,</span><span class="s2">"string"</span><span class="p">],</span><span class="w"> </span><span class="nl">"default"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span><span class="w">
+              </span><span class="p">{</span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"product_category"</span><span class="p">,</span><span class="w"> </span><span class="nl">"type"</span><span class="p">:[</span><span class="s2">"null"</span><span class="p">,</span><span class="w"> </span><span class="s2">"string"</span><span class="p">],</span><span class="w"> </span><span class="nl">"default"</span><span class="p">:</span><span class="kc">null</span><span class="p">}],</span><span class="w">
+    </span><span class="nl">"connect.name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mysqlavro.oc.products-value"</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"version"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+<ul>
+  <li>만약 특정 토픽에서 스키마 정보가 변경된 경우 새로운 스키마 id 할당</li>
+  <li>해당 토픽 subject 명은 유지 되고, 그 안에서 버전이 바뀜</li>
+</ul>
+
+<h4 id="schema-registry에-등록된-모든-subjects-정보-확인">schema registry에 등록된 모든 subjects 정보 확인</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>http GET http://localhost:8081/subjects
+</code></pre></div></div>
+<ul>
+  <li>subject 명은 topic 명 + ‘-key’ 또는 ‘-value’로 명명됨</li>
+</ul>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="s2">"mysqlavro-key"</span><span class="p">,</span><span class="w">
+  </span><span class="s2">"mysqlavro-value"</span><span class="p">,</span><span class="w">
+  </span><span class="s2">"mysqlavro.oc.customers-key"</span><span class="p">,</span><span class="w">
+  </span><span class="s2">"mysqlavro.oc.customers-value"</span><span class="w">
+          </span><span class="err">...</span><span class="w">
+</span><span class="p">}</span><span class="w">
+
+</span></code></pre></div></div>
+
+<h4 id="특정-id를-가지는-schema-정보-확인">특정 id를 가지는 schema 정보 확인</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>http GET http://localhost:8081/schemas/ids/8
+</code></pre></div></div>
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"schema"</span><span class="w"> </span><span class="p">:</span><span class="w">
+  </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"type"</span><span class="p">:</span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"name"</span><span class="p">:</span><span class="s2">"Value"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"namespace"</span><span class="p">:</span><span class="s2">"mysqlavro.oc.products"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"fields"</span><span class="p">:[{</span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"product_id"</span><span class="p">,</span><span class="w"> </span><span class="nl">"type"</span><span class="p">:</span><span class="s2">"int"</span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"product_name"</span><span class="p">,</span><span class="w"> </span><span class="nl">"type"</span><span class="p">:[</span><span class="s2">"null"</span><span class="p">,</span><span class="s2">"string"</span><span class="p">],</span><span class="w"> </span><span class="nl">"default"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"product_category"</span><span class="p">,</span><span class="w"> </span><span class="nl">"type"</span><span class="p">:[</span><span class="s2">"null"</span><span class="p">,</span><span class="w"> </span><span class="s2">"string"</span><span class="p">],</span><span class="w"> </span><span class="nl">"default"</span><span class="p">:</span><span class="kc">null</span><span class="p">}],</span><span class="w">
+    </span><span class="nl">"connect.name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mysqlavro.oc.products-value"</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h4 id="특정-subject의-버전-별-schema-정보-확인">특정 subject의 버전 별 schema 정보 확인</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>http GET http://localhost:8081/subjects/mysqlavro.oc.customers-value/versions/1
+</code></pre></div></div>
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"schema"</span><span class="w"> </span><span class="p">:</span><span class="w">
+  </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"type"</span><span class="p">:</span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"name"</span><span class="p">:</span><span class="s2">"Value"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"namespace"</span><span class="p">:</span><span class="s2">"mysqlavro.oc.customers"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"fields"</span><span class="p">:[{</span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"customers_id"</span><span class="p">,</span><span class="w"> </span><span class="nl">"type"</span><span class="p">:</span><span class="s2">"int"</span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"name"</span><span class="p">,</span><span class="w"> </span><span class="nl">"type"</span><span class="p">:</span><span class="s2">"string"</span><span class="p">},</span><span class="w">
+      </span><span class="p">{</span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"email"</span><span class="p">,</span><span class="w"> </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">}],</span><span class="w">
+    </span><span class="nl">"connect.name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mysqlavro.oc.customers-value"</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"version"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h4 id="전역으로-등록된-config-정보-확인">전역으로 등록된 config 정보 확인</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>http GET http://localhost:8081/config
+</code></pre></div></div>
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"compatibilityLevel"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"BACKWARD"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h4 id="개별-subject-별-config-정보-확인">개별 subject 별 config 정보 확인</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>http GET http://localhost:8081/config/mysqlavro.ac.customers-value
+</code></pre></div></div>
+
+<p><br></p>
+<hr>
+
+<h3 id="schema-개요와-필요성">Schema 개요와 필요성</h3>
+<ul>
+  <li>schema란 데이터의 구조와 제약 조건에 대한 규칙 정보를 기술한 메타 정보</li>
+  <li>정해진 규칙대로 데이터를 입력 / 수정하지 않으면 잘못된 로직으로 데이터를 사용할 수 있음</li>
+</ul>
+
+<h4 id="오픈소스-분산-db-아키텍처의-특징">오픈소스 분산 DB 아키텍처의 특징</h4>
+<ul>
+  <li>데이터 처리 성능 극대화를 위해 자유로운 확장이 가능한 분산 DB</li>
+  <li>초기 오픈 소스 분산 DB의 경우 schema가 없는 데이터 저장 구조 채택</li>
+  <li>현재도 NoSQL의 경우는 schema가 없는 데이터 구조로 발전</li>
+</ul>
+
+<h4 id="schemaless-이슈">Schemaless 이슈</h4>
+<ul>
+  <li>너무 자유로운 스키마 허용과 묵시적인 schema 추론은 복잡한 비즈니스 처리나 여러 사용자 / 팀이 개입된 데이터 처리 시 문제 발생시키기 쉬움</li>
+  <li>sink에서 스키마 정보 없이 데이터 포맷 처리 어려움</li>
+</ul>
+
+<h4 id="nosql에서-스키마-변경에-따른-데이터-저장">NoSQL에서 스키마 변경에 따른 데이터 저장</h4>
+
+<p><img src="https://imucoding.github.io/assets/images/nosql.png" alt="img.png"></p>
+<ul>
+  <li>schemaless : 비슷한 유형의 데이터 그룹 들을 묶는 동적 스키마로 발전 필요</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="avro-읽기-스키마와-쓰기-스키마">Avro 읽기 스키마와 쓰기 스키마</h3>
+<ul>
+  <li>쓰기 스키마 : 애플리케이션이 데이터 전송 시 데이터를 부호화하기 위해 사용하는 스키마</li>
+  <li>읽기 스키마 : 애플리케이션이 데이터를 복화하하여 읽어들일 시 사용하는 스키마</li>
+</ul>
+
+<p><img src="https://imucoding.github.io/assets/images/readwriteschema.png" alt="img.png"></p>
+<ul>
+  <li>별도의 애플리케이션에서 쓰기 스키마와 읽기 스키마를 따로 가져갈 필요 있는가?</li>
+  <li>쓰기 스키마와 읽기 스키마가 다룰 수 있는가?</li>
+</ul>
+
+<p><img src="https://imucoding.github.io/assets/images/schemachange.png" alt="img.png"></p>
+<ul>
+  <li>v1에서 v2로 스키마 변경된다면 수신 App은 당연히 동일 스키마로 변경되어야 하는가?</li>
+  <li>기존 수신 App은 새로운 스키마 변경을 어떻게 반영해서 프로그램 변경?</li>
+  <li>변경될 때마다 수신 App 적용하면 스키마 일관성은 어떻게 유지?</li>
+</ul>
+
+<h4 id="호환성-없는-스키마-발전에-따른-메시지-변화">호환성 없는 스키마 발전에 따른 메시지 변화</h4>
+
+<p><img src="https://imucoding.github.io/assets/images/messagechange.png" alt="img.png"></p>
+<ul>
+  <li>수신 스키마가 변경되는 경우 호환이 가능하다면 읽으면서 차이 해소</li>
+</ul>
+
+<h4 id="avro의-읽기-스키마와-쓰기-스키마-호환성">Avro의 읽기 스키마와 쓰기 스키마 호환성</h4>
+<ul>
+  <li>avro는 읽기 스키마와 쓰기 스키마가 동일하지 않아도 되며 호환 가능하기만 하면됨</li>
+  <li>데이터를 복호화 (읽기) 할 때 avro는 쓰기 스키마와 읽기 스키마가 호환 가능하다면 읽어들이면서 그 차이를 해소</li>
+  <li>속성의 순서가 달라도 상관 없음</li>
+  <li>쓰기 스키마에는 있지만 읽기 스키마에는 없는 속성은 읽어 들일 때 속성 무시</li>
+  <li>쓰기 스키마에는 없지만 읽기 스키마에는 있는 속성은 읽어 들일 때 읽기 스키마에 선언된 기본 값으로 읽어들임</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="스키마-호환성과-전체-메시지-일관성">스키마 호환성과 전체 메시지 일관성</h3>
+<ul>
+  <li>스키마 호환성 지원을 통해 유연하게 상황 대처 가능 vs 스키마 호환성을 통해 전체 메시지는 데이터 일관성이 깨질 수 있음</li>
+</ul>
+
+<h4 id="하위-호환성-backward">하위 호환성 (BACKWARD)</h4>
+<ul>
+  <li>새로운 버전의 읽기 스키마는 예전 버전의 쓰기 스키마를 처리할 수 있음</li>
+</ul>
+
+<p>case 1) 예전 버전에서 속성이 추가된 새로운 버전의 읽기 스키마는 기본 값으로 해당 속성을 읽음 <br>
+따라서 읽기 스키마에 새로운 버전으로 속성이 추가될 경우 반드시 기본 값 설정이 필요</p>
+
+<p><img src="https://imucoding.github.io/assets/images/backward1.png" alt="img.png"></p>
+
+<p>case 2) 예전 버전에서 속성이 삭제된 새로운 버전의 읽기 스키마는 해당 속성을 무시 <br></p>
+
+<p><img src="https://imucoding.github.io/assets/images/backward2.png" alt="img.png"></p>
+
+<h4 id="상위-호환성-forward">상위 호환성 (FORWARD)</h4>
+<ul>
+  <li>예전 버전의 읽기 스키마는 새로운 버전의 쓰기 스키마를 처리할 수 있음</li>
+</ul>
+
+<p>case 1) 새로운 버전 쓰기 스키마에 신규 속성이 추가되는 경우 예전 버전의 읽기 스키마는 해당 속성을 무시 <br></p>
+
+<p><img src="https://imucoding.github.io/assets/images/forward1.png" alt="img.png"></p>
+
+<p>case 2) 새로운 버전 쓰기 스키마에 기존 속성이 삭제되는 경우 예전 버전의 읽기 스키마는 해당 속성의 기본 값으로 읽어들임 <br>
+따라서 삭제되는 기존 속성은 반드시 예전 버전에서 기본 값을 가지고 있어야 함</p>
+
+<p><img src="https://imucoding.github.io/assets/images/forward2.png" alt="img.png"></p>
+
+<h4 id="avro-스키마-호환성-체크">Avro 스키마 호환성 체크</h4>
+<ul>
+  <li>새로 추가되는 컬럼이 기본 값을 가지고 있지 않거나 (하위 호환성 오류) 삭제되는 컬럼이 기본 값을 가지고 있지 않은 경우 (상위 호환성 오류) 호환성 오류 발생</li>
+  <li>기존 컬럼 타입 변경, 기존 컬럼 명 변경은 스키마 호환성 체크가 제대로 되지 않음</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="subject-개요">Subject 개요</h3>
+<ul>
+  <li>schema registry에 등록된 토픽 별 기준 정보 (schema namespace)</li>
+  <li>subject 내의 스키마 호환성 체크</li>
+  <li>version은 subject 내에서 변경</li>
+  <li>schema가 진화할 때 동일한 subject에서 새로운 schema id와 version을 가짐</li>
+</ul>
+
+<h4 id="subject의-naming-유형">Subject의 Naming 유형</h4>
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">TopicNameStrategy</code>
+    <ul>
+      <li>subject의 이름을 정하는 기본 설정</li>
+      <li>개별 토픽 별 토픽 key / value에 따라 스키마를 등록
+        <ul>
+          <li>ex) oc.customer의 토픽 명인 경우 oc.customer-key, oc.customer-value</li>
+        </ul>
+      </li>
+      <li>토픽 내의 메시지 레코드가 동일한 스키마를 따르도록 설정</li>
+      <li>스키마 호환성이 설정된 경우 해당 호환성에 적합하지 않은 스키마를 가지는 메시지는 토픽에 저장되지 않음</li>
+    </ul>
+  </li>
+  <li>
+<code class="language-plaintext highlighter-rouge">RecordNameStrategy</code>
+    <ul>
+      <li>특정 레코드 타입별로 스키마를 따르도록 설정</li>
+      <li>하나의 토픽 내 여러 타입의 이벤트가 있을 경우 이벤트 유형별로 스키마를 지정할 때 사용
+        <ul>
+          <li>event라는 토픽에 click, page_view 두 가지 이벤트 타입에 대한 레코드가 있을 수 있음</li>
+        </ul>
+      </li>
+      <li>kafka 전체에서 특정 레코드 타입별로 스키마를 설정하므로 서로 다른 토픽에서 동일한 레코드 타입들이 있을 경우에도 동일 스키마가 적용됨</li>
+    </ul>
+  </li>
+  <li>
+<code class="language-plaintext highlighter-rouge">TopicRecordNameStrategy</code>
+    <ul>
+      <li>RecordNameStrategy와 유사하지만 토픽 내의 특정 레코드 타입 별로 스키마를 따르도록 설정</li>
+      <li>개별 토픽의 특정 레코드 타입별로 스키마를 설정하므로 서로 다른 토픽에서 동일한 레코드 타입들이 있을 경우에는 서로 다른 스키마가 적용됨</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="subject-스키마-호환성">Subject 스키마 호환성</h4>
+<ul>
+  <li>subject 내의 스키마 호환성 (compatibility) 체크</li>
+</ul>
+
+<p><img src="https://imucoding.github.io/assets/images/subjectevolve.png" alt="img.png"></p>
+<ul>
+  <li>id는 key, value 따로 관리하지 않음, 스키마 저장 / 변경 시 새로 할당</li>
+  <li>value의 schema 변경 되어 새로운 id가 할당되고 version이 업데이트 됨</li>
+  <li>스키마 호환성은 schema id 레벨로 체크되지 않고 subject 레벨로 체크됨</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="스키마-발전과-호환성">스키마 발전과 호환성</h3>
+<ul>
+  <li>업무가 계속 변함에 따라 스키마도 변경</li>
+  <li>schema registry는 subject 단위로 변경된 스키마의 버전과 호환성을 관리</li>
+  <li>schema registry에 subject 별로 호환성이 설정되어 있다면 해당 호환성에 맞지 않는 스키마 변경은 허용되지 않음</li>
+</ul>
+
+<h4 id="schema-registry-기반의-producer와-consumer">Schema Registry 기반의 Producer와 Consumer</h4>
+<p><img src="https://imucoding.github.io/assets/images/schemaproducerconsumer.png" alt="img.png"></p>
+<ul>
+  <li>schema registry를 이용한 producer와 consumer 애플리케이션은 별도의 스키마를 개별적으로 가지고 있음</li>
+  <li>스키마가 변경됨에 따라 producer 또는 consumer가 가지고 있는 스키마를 개별적으로 update 할 수 있음</li>
+  <li>schema registry에 스키마에 대해 호환성이 설정되면 해당 호환성에 부합하는 스키마 변경이 되었을 때만 producer와 consumer 애플리케이션 스키마 update 가능</li>
+</ul>
+
+
+
+    </div>
+
+</article>
+<div class="post-nav">
+<a class="previous" href="/kubernetes/2024/09/07/service.html" title="네트워크를 통해 서비스에 파드 연결">
+          <div>네트워크를 통해 서비스에 파드 연결</div>
+        </a><a class="next" href="/kafka/2024/10/08/ksqldb-1.html" title="KSQLDB 개요">
+          <div>KSQLDB 개요</div>
+        </a>
+</div>
+<div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li class="">
+          <a class="post-link" href="/kafka/2024/08/15/log-cleanup-policy.html" title="Log Cleanup Policy">
+            Log Cleanup Policy<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="">
+          <a class="post-link" href="/media/2026/04/25/timecode-driven-multi-source-synchronization.html" title="Timecode-driven Multi-source Synchronization">
+            Timecode-driven Multi-source Synchronization<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="">
+          <a class="post-link" href="/kafka/2024/10/08/ksqldb-1.html" title="KSQLDB 개요">
+            KSQLDB 개요<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="">
+          <a class="post-link" href="/kafka/2024/08/06/kafka-consumer.html" title="Kafka Consumer">
+            Kafka Consumer<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+</ul>
+    </div>
+<div class="post-comments"></div></section>
+</div>
+
+
+  </section>
+  <section class="sidebar" style="margin-left: 15px;">
+    <!-- Get sidebar items --><style type="text/css" media="screen">
+.post-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+</style>
+
+<div class="post-menu">
+  <div class="post-menu-title">TOC</div>
+  <div class="post-menu-content"></div>
+</div>
+
+<script>
+  function generateContent() {
+    var menu = document.querySelector(".post-menu");
+    var menuContent =  menu.querySelector(".post-menu-content");
+    var headings = document.querySelector(".post-content").querySelectorAll("h2, h3, h4, h5, h6");
+
+    // Hide menu when no headings
+    if (headings.length === 0) {
+      return menu.style.display = "none";
+    }
+
+    // Generate post menu
+    var menuHTML = '';
+    for (var i = 0; i < headings.length; i++) {
+      var h = headings[i];
+      menuHTML += (
+        '<li class="h-' + h.tagName.toLowerCase() + '">'
+        + '<a href="#h-' + h.getAttribute('id') + '">' + h.textContent + '</a></li>');
+    }
+
+    menuContent.innerHTML = '<ul>' + menuHTML + '</ul>';
+
+    // The header element
+    var header = document.querySelector('header.site-header');
+
+    function doMenuCollapse(index, over_items) {
+      var items = menuContent.firstChild.children;
+
+      if (over_items == undefined) {
+        over_items = 20;
+      }
+
+      if (items.length < over_items) {
+        return;
+      }
+
+      var activeItem = items[index];
+      var beginItem = activeItem
+      var endItem = activeItem
+      var beginIndex = index;
+      var endIndex = index + 1;
+      while (beginIndex >= 0
+        && !items[beginIndex].classList.contains('h-h2')) {
+        beginIndex -= 1;
+      }
+      while (endIndex < items.length
+        && !items[endIndex].classList.contains('h-h2')) {
+        endIndex += 1;
+      }
+      for (var i = 0; i < beginIndex; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+      for (var i = beginIndex + 1; i < endIndex; i++) {
+        item = items[i]
+        // if (!item.classList.contains('h-h2')) {
+          item.style.display = '';
+        // }
+      }
+      for (var i = endIndex; i < items.length; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+    }
+
+    // Init menu collapsed
+    doMenuCollapse(-1);
+
+    // Active the menu item
+    window.addEventListener('scroll', function (event) {
+      var lastActive = menuContent.querySelector('.active');
+      var changed = true;
+      var activeIndex = -1;
+      for (var i = headings.length - 1; i >= 0; i--) {
+        var h = headings[i];
+        var headingRect = h.getBoundingClientRect();
+        var headerRect = header.getBoundingClientRect();
+        var headerTop = Math.floor(headerRect.top);
+        var headerHeight = Math.floor(headerRect.height);
+        var headerHeight = headerTop + headerHeight + 20;
+        if (headingRect.top <= headerHeight) {
+          var id = 'h-' + h.getAttribute('id');
+          var a = menuContent.querySelector('a[href="#' + id  + '"]');
+          var curActive = a.parentNode;
+          if (curActive) {
+            curActive.classList.add('active');
+            activeIndex = i;
+          }
+          if (lastActive == curActive) {
+            changed = false;
+          }
+          break;
+        }
+      }
+      if (changed) {
+        if (lastActive) {
+          lastActive.classList.remove('active');
+        }
+        doMenuCollapse(activeIndex);
+      }
+      event.preventDefault();
+    });
+  }
+  generateContent();
+</script>
+</section>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+    <div class="site-footer-inner">
+<div>Unpublished Work <span class="copyleft">©</span> 2023-2026 hyunjune</div>
+      <div class="footer-col rss-subscribe">Subscribe <a href="/feed.xml">via RSS</a>
+</div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

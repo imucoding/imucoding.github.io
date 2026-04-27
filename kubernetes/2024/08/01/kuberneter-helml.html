@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>헬름을 이용한 애플리케이션 패키징 및 관리 | IMU TECH BLOG</title>
+<meta name="generator" content="Jekyll v4.4.1">
+<meta property="og:title" content="헬름을 이용한 애플리케이션 패키징 및 관리">
+<meta name="author" content="Hyunjune">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="헬름이 제공하는 기능 헬름 사용 시 여러 개의 YAML 정의 및 스크립트를 하나의 아티팩트로 묶어 공개 또는 비공개 리포지토리에 공유 가능 헬름 프로젝트는 CNCF에서 관리함 Helm3 부터 서버 컴포넌트 필요 없이 사용가능 (kubectl과 동일 접속 정보 사용), 다만 패키지 리포지토리를 따로 설정 해야함 ex) helm repo add test_repo https://test_repo.net helm repo update # 로컬 리포지토리 캐시 업데이트 helm search repo web --versions # 애플리케이션 검색">
+<meta property="og:description" content="헬름이 제공하는 기능 헬름 사용 시 여러 개의 YAML 정의 및 스크립트를 하나의 아티팩트로 묶어 공개 또는 비공개 리포지토리에 공유 가능 헬름 프로젝트는 CNCF에서 관리함 Helm3 부터 서버 컴포넌트 필요 없이 사용가능 (kubectl과 동일 접속 정보 사용), 다만 패키지 리포지토리를 따로 설정 해야함 ex) helm repo add test_repo https://test_repo.net helm repo update # 로컬 리포지토리 캐시 업데이트 helm search repo web --versions # 애플리케이션 검색">
+<link rel="canonical" href="https://imucoding.github.io/kubernetes/2024/08/01/kuberneter-helml.html">
+<meta property="og:url" content="https://imucoding.github.io/kubernetes/2024/08/01/kuberneter-helml.html">
+<meta property="og:site_name" content="IMU TECH BLOG">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2024-08-01T00:00:00+00:00">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="헬름을 이용한 애플리케이션 패키징 및 관리">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Hyunjune"},"dateModified":"2024-08-01T00:00:00+00:00","datePublished":"2024-08-01T00:00:00+00:00","description":"헬름이 제공하는 기능 헬름 사용 시 여러 개의 YAML 정의 및 스크립트를 하나의 아티팩트로 묶어 공개 또는 비공개 리포지토리에 공유 가능 헬름 프로젝트는 CNCF에서 관리함 Helm3 부터 서버 컴포넌트 필요 없이 사용가능 (kubectl과 동일 접속 정보 사용), 다만 패키지 리포지토리를 따로 설정 해야함 ex) helm repo add test_repo https://test_repo.net helm repo update # 로컬 리포지토리 캐시 업데이트 helm search repo web --versions # 애플리케이션 검색","headline":"헬름을 이용한 애플리케이션 패키징 및 관리","mainEntityOfPage":{"@type":"WebPage","@id":"https://imucoding.github.io/kubernetes/2024/08/01/kuberneter-helml.html"},"url":"https://imucoding.github.io/kubernetes/2024/08/01/kuberneter-helml.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="icon" href="">
+  <link rel="canonical" href="https://imucoding.github.io">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-noto-sans@0.0.72/index.min.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <script src="/assets/js/main.js"></script><link type="application/atom+xml" rel="alternate" href="https://imucoding.github.io/feed.xml" title="IMU TECH BLOG">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/languages/go.min.js" async></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// Init highlight js
+document.addEventListener('DOMContentLoaded', function(event) {
+  var els = document.querySelectorAll('pre code')
+
+  function addLangData(block) {
+    var outer = block.parentElement.parentElement.parentElement;
+    var lang = block.getAttribute('data-lang');
+    for (var i = 0; i < outer.classList.length; i++) {
+      var cls = outer.classList[i];
+      if (cls.startsWith('language-')) {
+        lang = cls;
+        break;
+      }
+    }
+    if (!lang) {
+      cls = block.getAttribute('class');
+      lang = cls ? cls.replace('hljs ', '') : '';
+    }
+    if (lang.startsWith('language-')) {
+      lang = lang.substr(9);
+    }
+    block.setAttribute('class', 'hljs ' + lang);
+    block.parentNode.setAttribute('data-lang', lang);
+  }
+
+  function addBadge(block) {
+    var enabled = ('true' || 'true').toLowerCase();
+    if (enabled == 'true') {
+      var pre = block.parentElement;
+      pre.classList.add('badge');
+    }
+  }
+
+  function handle(block) {
+    addLangData(block);
+    addBadge(block)
+    hljs.highlightBlock(block);
+  }
+
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    handle(el);
+  }
+});
+</script>
+
+<style>
+  /* code language badge */
+  pre.badge::before {
+    content: attr(data-lang);
+    color: #fff;
+    background-color: #ff4e00;
+    padding: 0 .5em;
+    border-radius: 0 2px;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 32px;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+  }
+
+  /* fix wrong badge display for firefox browser */
+  code > table pre::before {
+    display: none;
+  }
+</style>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe-lightbox.umd.min.js" async></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe.umd.min.js" async></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe.min.css" rel="stylesheet">
+<style>
+  .pswp .pswp__container .pswp__img {
+    background-color: white;
+  }
+</style>
+
+<script>
+  function initPhotoSwipe() {
+    let customOptions = {};
+
+    try {
+      const data = ``.replaceAll("=>", ":");
+      customOptions = JSON.parse(data);
+    } catch (e) {
+      console.info("Invalid custom photo previewer options! " + e.message);
+    }
+
+    // Define object and gallery options
+    const options = Object.assign(
+      {
+        gallery: "section.main",
+        children: "a.photo-swipe",
+        photo_scale: 2,
+        // dynamic import is not supported in UMD version
+        pswpModule: PhotoSwipe,
+      },
+      customOptions
+    );
+
+    const galleryEl = document.querySelector(options.gallery);
+    if (!galleryEl) {
+      return;
+    }
+
+    const imgEls = [];
+    const els = galleryEl.querySelectorAll("img:not(.emoji)");
+    els.forEach((el) => {
+      if (el.src.trim() == "") {
+        return;
+      }
+      if (!imgEls.includes(el)) {
+        imgEls.push(el);
+      }
+    });
+
+    if (imgEls.length === 0) {
+      return;
+    }
+
+    imgEls.forEach((imgEl) => {
+      imgEl.outerHTML = `
+      <a class="photo-swipe"
+        href="${imgEl.src}"
+        data-pswp-width="${
+          Math.max(imgEl.naturalWidth, imgEl.width) * options.photo_scale
+        }"
+        data-pswp-height="${
+          Math.max(imgEl.naturalHeight, imgEl.height) * options.photo_scale
+        }"
+        data-pswp-caption="${imgEl.getAttribute("caption") || imgEl.alt}"
+        target="_blank">
+        ${imgEl.outerHTML}
+      </a>`;
+    });
+
+    // Initialize PhotoSwipe 5
+    var lightbox = new PhotoSwipeLightbox(options);
+
+    lightbox.init();
+  }
+
+  window.addEventListener("load", initPhotoSwipe);
+</script>
+
+<meta name="google-site-verification" content="d_7fHqoWfEPFWDaXJ19fg2f5xy6BPZbrY4fbsJjIUSI">
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="site-header " role="banner">
+
+  <div class="wrapper">
+    <div class="site-header-inner">
+<span class="site-brand"><a class="site-brand-inner" rel="author" href="/">
+  <img class="site-favicon" title="IMU TECH BLOG" src="" onerror="this.style.display='none'">
+  IMU TECH BLOG
+</a>
+</span><nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger">
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewbox="0 0 18 15" width="18px" height="15px">
+                <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"></path>
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger">
+<a class="page-link" href="/about.html">ABOUT</a><a class="page-link" href="/archives.html">ARCHIVES</a><a class="page-link" href="/categories.html">CATEGORIES</a><a class="page-link" href="/">HOME</a><a class="page-link" href="/tags.html">TAGS</a>
+
+
+
+
+
+
+
+
+
+<div class="page-link" style="display: inline;">
+
+
+
+<div id="google_translate_element" style="display: none;">
+</div>
+
+<div class="ct-language">
+  <ul class="list-unstyled ct-language-dropdown">
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="en">
+          
+          <img src="https://cdn.countryflags.com/thumbs/united-states-of-america/flag-400.png" title="English">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="fr">
+          
+          <img src="https://cdn.countryflags.com/thumbs/france/flag-400.png" title="French">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="zh-CN">
+          
+          <img src="https://cdn.countryflags.com/thumbs/china/flag-400.png" title="Chinese(Simple)">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ja">
+          
+          <img src="https://cdn.countryflags.com/thumbs/japan/flag-400.png" title="Japanese">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ko">
+          
+          <img src="https://cdn.countryflags.com/thumbs/south-korea/flag-400.png" title="Korean">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ru">
+          
+          <img src="https://cdn.countryflags.com/thumbs/russia/flag-400.png" title="Russian">
+          
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    autoDisplay: false,
+    layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+  }, 'google_translate_element');
+
+  // Links to cross-origin destinations are unsafe
+  var gll = document.getElementsByClassName('goog-logo-link')[0];
+  if (gll) {
+    gll.setAttribute('rel', 'noopener');
+  }
+
+  function restoreLang() {
+    var iframe = document.getElementsByClassName('goog-te-banner-frame')[0];
+    if (!iframe) return;
+
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    var restore_el = innerDoc.getElementsByTagName("button");
+
+    for (var i = 0; i < restore_el.length; i++) {
+      if (restore_el[i].id.indexOf("restore") >= 0) {
+        restore_el[i].click();
+        var close_el = innerDoc.getElementsByClassName("goog-close-link");
+        close_el[0].click();
+        return;
+      }
+    }
+  }
+
+  function triggerHtmlEvent(element, eventName) {
+    var event;
+    if (document.createEvent) {
+      event = document.createEvent('HTMLEvents');
+      event.initEvent(eventName, true, true);
+      element.dispatchEvent(event);
+    } else {
+      event = document.createEventObject();
+      event.eventType = eventName;
+      element.fireEvent('on' + event.eventType, event);
+    }
+  }
+
+  var googleCombo = document.querySelector("select.goog-te-combo");
+  var langSelect = document.querySelector('.ct-language');
+  langSelect.addEventListener('click', function(event) {
+    if (!event.target) {
+      return;
+    }
+
+    var selected = document.querySelector('.ct-language .ct-language-selected');
+    if (selected) {
+      selected.classList.remove('ct-language-selected');
+    }
+
+    var target = event.target;
+    while (target && target !== langSelect ) {
+      if (target.matches('.lang-select')) {
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (target && target.matches('.lang-select')) {
+      var lang = target.getAttribute('data-lang');
+      if (googleCombo.value == lang) {
+        restoreLang();
+      } else {
+        target.parentElement.classList.add('ct-language-selected');
+        googleCombo.value = lang;
+        triggerHtmlEvent(googleCombo, 'change');
+      }
+    }
+
+    event.preventDefault();
+  });
+}
+</script>
+
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+</div>
+</div>
+        </nav>
+</div>
+  </div>
+</header>
+
+<script>
+  function initHeader() {
+    var lastScrollY = getScrollPos().y;
+    var documentElement = document.documentElement;
+
+    function storeScrollData() {
+      var y = getScrollPos().y;var scrollStatus = "";
+
+      if (y <= 0) {
+        scrollStatus = "top";
+      } else if ((window.innerHeight + y) >= document.body.offsetHeight) {
+        scrollStatus = "bottom";
+      } else {
+        var isScrollDown = (y - lastScrollY > 0) ? true : false;
+        scrollStatus = isScrollDown ? "down" : "up";
+      }
+
+      lastScrollY = y;
+      documentElement.setAttribute("data-scroll-status", scrollStatus);
+    }
+
+    window.addEventListener('scroll', function(e) {
+      storeScrollData();
+    });
+
+    storeScrollData();
+  }
+  document.addEventListener('DOMContentLoaded', initHeader);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  function hashLocate(hashValue) {
+    hashValue = hashValue.replace(/^.*#h-/, '');
+    hashValue = decodeURIComponent(hashValue);
+    var element = document.getElementById(hashValue);
+
+    if (!element) {
+      return;
+    }
+
+    var header = document.querySelector('header.site-header');
+    var headerRect = header.getBoundingClientRect();
+    var headerTop = Math.floor(headerRect.top);
+    var headerHeight = Math.floor(headerRect.height);
+    var scrollPos = getScrollPos();
+    var offsetY = element.offsetTop - (headerTop + headerHeight + 20);
+
+    if (offsetY == scrollPos.y) {
+      return;
+    }
+
+    if (headerTop == 0  && offsetY > scrollPos.y) {
+      offsetY += headerHeight + 2;
+    } else if (headerTop < 0  && offsetY < scrollPos.y) {
+      offsetY -= headerHeight - 2;
+    }
+
+    smoothScrollTo(offsetY);
+  }
+
+  // The first event occurred
+  window.addEventListener('load', function(event) {
+    if (window.location.hash) {
+      hashLocate(window.location.hash);
+    }
+  });
+
+  // The first event occurred
+  window.addEventListener('click', function(event) {
+    if (event.target.tagName.toLowerCase() == 'a') {
+      hashLocate(event.target.getAttribute('href'));
+    }
+  });
+</script>
+<div class="theme-toggle">
+  <input type="checkbox" id="theme-switch">
+  <label for="theme-switch">
+    <div class="toggle"></div>
+    <div class="names">
+      <p class="light">Light</p>
+      <p class="dark">Dark</p>
+    </div>
+  </label>
+</div>
+
+
+
+
+<script>
+  (function() {
+    var sw = document.getElementById('theme-switch');
+    var html = document.getElementsByTagName('html')[0];
+    var nightModeOption = ('manual' || 'auto').toLowerCase();
+    var storage = nightModeOption === 'manual'
+        ? localStorage
+        : sessionStorage;
+    var themeData = loadThemeData();
+
+    function saveThemeData(data) {
+      storage.setItem('theme', JSON.stringify(data));
+    }
+
+    function loadThemeData() {
+      var data = storage.getItem('theme');
+      try {
+        data = JSON.parse(data ? data : '');
+      } catch(e) {
+        data = { nightShift: undefined, autoToggleAt: 0 };
+        saveThemeData(data);
+      }
+      return data;
+    }
+
+    function handleThemeToggle(nightShift) {
+      themeData.nightShift = nightShift;
+      saveThemeData(themeData);
+      html.dataset.theme = nightShift ? 'dark' : 'light';
+      setTimeout(function() {
+        sw.checked = nightShift ? true : false;
+        document.dispatchEvent(new Event('theme-changed'));
+      }, 50);
+    }
+
+    function autoThemeToggle() {
+      // Next time point of theme toggle
+      var now = new Date();
+      var toggleAt = new Date();
+      var hours = now.getHours();
+      var nightShift = hours >= 19 || hours <=7;
+
+      if (nightShift) {
+        if (hours > 7) {
+          toggleAt.setDate(toggleAt.getDate() + 1);
+        }
+        toggleAt.setHours(7);
+      } else {
+        toggleAt.setHours(19);
+      }
+
+      toggleAt.setMinutes(0);
+      toggleAt.setSeconds(0);
+      toggleAt.setMilliseconds(0)
+
+      var delay = toggleAt.getTime() - now.getTime();
+
+      // auto toggle theme mode
+      setTimeout(function() {
+        handleThemeToggle(!nightShift);
+      }, delay);
+
+      return {
+        nightShift: nightShift,
+        toggleAt: toggleAt.getTime()
+      };
+    }
+
+    // Listen the theme toggle event
+    sw.addEventListener('change', function(event) {
+      handleThemeToggle(event.target.checked);
+    });
+
+    if (nightModeOption == 'auto') {
+      var data = autoThemeToggle();
+
+      // Toggle theme by local setting
+      if (data.toggleAt > themeData.autoToggleAt) {
+        themeData.autoToggleAt = data.toggleAt;
+        handleThemeToggle(data.nightShift);
+      } else {
+        handleThemeToggle(themeData.nightShift);
+      }
+    } else if (nightModeOption == 'manual') {
+      handleThemeToggle(themeData.nightShift);
+    } else {
+      var nightShift = themeData.nightShift;
+      if (nightShift === undefined) {
+        nightShift = nightModeOption === 'on';
+      }
+      handleThemeToggle(nightShift);
+    }
+  })();
+</script>
+<div id="click-to-top" class="click-to-top">
+  <i class="fa fa-arrow-up"></i>
+</div>
+<script>
+  (function () {
+    const clickToTop = document.getElementById('click-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        clickToTop.classList.add('show')
+      }else {
+        clickToTop.classList.remove('show')
+      }
+    });
+    clickToTop.addEventListener('click', () => {
+      window.smoothScrollTo(0);
+    });
+  })();
+</script>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="framework">
+  <section class="main">
+
+     <div class="post">
+  <section>
+
+
+
+
+
+
+
+
+
+<header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">헬름을 이용한 애플리케이션 패키징 및 관리</h1>
+  <h2 class="post-subtitle"></h2>
+
+  <div class="post-meta">
+    <time class="dt-published" datetime="2024-08-01T00:00:00+00:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Aug 01, 2024
+    </time><span class="post-author left-vsplit"><i class="fa fa-pencil"></i> Hyunjune</span>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 8 mins</span>
+  </div>
+<div class="post-tags"><a class="post-tag" href="/tags.html#helm">#helm</a></div></header>
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <div class="post-content e-content" itemprop="articleBody">
+
+      
+<h3 id="헬름이-제공하는-기능">헬름이 제공하는 기능</h3>
+<ul>
+  <li>헬름 사용 시 여러 개의 YAML 정의 및 스크립트를 하나의 아티팩트로 묶어 공개 또는 비공개 리포지토리에 공유 가능</li>
+  <li>헬름 프로젝트는 CNCF에서 관리함</li>
+  <li>Helm3 부터 서버 컴포넌트 필요 없이 사용가능 (kubectl과 동일 접속 정보 사용), 다만 패키지 리포지토리를 따로 설정 해야함</li>
+</ul>
+
+<p>ex)</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>helm repo add test_repo https://test_repo.net 
+helm repo update  # 로컬 리포지토리 캐시 업데이트
+helm search repo web --versions # 애플리케이션 검색
+</code></pre></div></div>
+
+<ul>
+  <li>헬름에서 애플리케이션의 패키지를 <code class="language-plaintext highlighter-rouge">chart</code>라고 함</li>
+  <li>차트는 로컬에서 만들어져서 로컬 컴퓨터에 저장될 수 있고 리포지토리에 배포될 수 있음</li>
+  <li>설치된 차트를 <code class="language-plaintext highlighter-rouge">release</code>라고 함. 릴리즈는 이름을 붙일 수 있고 릴리즈 이름을 달리해가며 같은 차트를 여러번 설치 가능</li>
+</ul>
+
+<p><br></p>
+
+<p><strong>패키지(차트) 구조</strong></p>
+
+<p><img src="https://imucoding.github.io/assets/images/chart_arc.png" alt="image"></p>
+<ul>
+  <li>차트는 압축 파일 형태로 패키징되며 차트 이름과 버전이 부여됨</li>
+  <li>압축 파일에는 디렉토리가 들어있는데 이 디렉토리 이름이 차트 이름이 됨</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">Chart.yaml</code>
+    <ul>
+      <li>차트 이름, 버전, 설명 등 메타 데이터가 존재</li>
+    </ul>
+  </li>
+  <li>
+<code class="language-plaintext highlighter-rouge">templates</code>
+    <ul>
+      <li>쿠버네티스 매니페스트가 들어있는 디렉토리</li>
+    </ul>
+  </li>
+  <li>
+<code class="language-plaintext highlighter-rouge">values.yaml</code>
+    <ul>
+      <li>쿠버네티스 매니페스트에 쓰인 파라미터 기본 값이 들어있음</li>
+    </ul>
+  </li>
+</ul>
+
+<p><br></p>
+
+<ul>
+  <li>차트 파라미터 값 확인
+    <div class="language-plaintext highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code> helm show values kiamol/vweb --version 1.0.0 # 
+</code></pre></div>    </div>
+  </li>
+  <li>파라미터 기본 값 수정하여 설치
+    <div class="language-plaintext highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code> helm install --set servicePort=8010 --set replicatCount=1 ch10-vweb kiamol/vweb --version 1.0.0 
+</code></pre></div>    </div>
+  </li>
+  <li>레플리카 수 변경하여 업그레이드
+    <div class="language-plaintext highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code>helm upgrade --set replicatCount=3 ch10-vweb kiamol/vweb --version 1.0.0 
+</code></pre></div>    </div>
+  </li>
+  <li>릴리즈 확인
+    <div class="language-plaintext highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code>helm ls
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="헬름으로-애플리케이션-패키징">헬름으로 애플리케이션 패키징</h3>
+
+<ul>
+  <li>애플리케이션의 매니페스트 (yaml) 파일을 모으고, 파라미터 값을 선정하고, 정의상 실제 설정 값을 템플릿 변수로 수정
+    <div class="language-yaml highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">apps/v1</span>
+<span class="na">kind</span><span class="pi">:</span> <span class="s">Deployment</span>
+<span class="na">metadata</span><span class="pi">:</span>
+<span class="na">name</span><span class="pi">:</span> <span class="pi">{{</span> <span class="nv">.Release.Name</span> <span class="pi">}}</span> <span class="c1"># 릴리즈 이름이 들어갈 템플릿 변수</span>
+<span class="na">labels</span><span class="pi">:</span>
+  <span class="na">kiamol</span><span class="pi">:</span> <span class="pi">{{</span> <span class="nv">.Values.kiamolChapter</span> <span class="pi">}}</span> <span class="c1"># kiamolChapter 값이 들어갈 템플릿 변수</span>
+</code></pre></div>    </div>
+  </li>
+  <li>치환되는 값은 여러 출처에서 옴</li>
+  <li>Release 객체
+    <ul>
+      <li>install 혹은 upgrade시 관련 정보를 담아 생성됨</li>
+    </ul>
+  </li>
+  <li>Values 객체
+    <ul>
+      <li>차트에 포함된 기본값에 사용자가 지정한 값을 overwrite한 정보를 담아 생성</li>
+    </ul>
+  </li>
+</ul>
+
+<p><br></p>
+
+<p><img src="https://imucoding.github.io/assets/images/web-ping.png" alt="image"></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>helm lint web-ping
+</code></pre></div></div>
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">lint</code> : 유효성 검증, 차트 설치에 실패할 수 있는 원인을 출력해줌</li>
+  <li>대상 차트는 압축 파일이 아니어도 가능, 차트 디렉토리에서 작업 가능</li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>helm install wp1 web-ping
+</code></pre></div></div>
+<p><br></p>
+
+<p><strong>web-ping-deployment.yaml</strong></p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">apps/v1</span>
+<span class="na">kind</span><span class="pi">:</span> <span class="s">Deployment</span>
+<span class="na">metadata</span><span class="pi">:</span>
+  <span class="na">name</span><span class="pi">:</span> <span class="pi">{{</span> <span class="nv">.Release.Name</span> <span class="pi">}}</span>
+  <span class="na">labels</span><span class="pi">:</span>
+    <span class="na">kiamol</span><span class="pi">:</span> <span class="pi">{{</span> <span class="nv">.Values.kiamolChapter</span> <span class="pi">}}</span>
+<span class="na">spec</span><span class="pi">:</span>
+  <span class="na">selector</span><span class="pi">:</span>
+    <span class="na">matchLabels</span><span class="pi">:</span>
+      <span class="na">app</span><span class="pi">:</span> <span class="s">web-ping</span>
+      <span class="na">instance</span><span class="pi">:</span> <span class="pi">{{</span> <span class="nv">.Release.Name</span> <span class="pi">}}</span>
+  <span class="na">template</span><span class="pi">:</span>
+    <span class="na">metadata</span><span class="pi">:</span>
+      <span class="na">labels</span><span class="pi">:</span>
+        <span class="na">app</span><span class="pi">:</span> <span class="s">web-ping</span>
+        <span class="na">instance</span><span class="pi">:</span> <span class="pi">{{</span> <span class="nv">.Release.Name</span> <span class="pi">}}</span>
+    <span class="na">spec</span><span class="pi">:</span>
+      <span class="na">containers</span><span class="pi">:</span>
+        <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">app</span>
+          <span class="na">image</span><span class="pi">:</span> <span class="s">kiamol/ch10-web-ping</span>
+          <span class="na">env</span><span class="pi">:</span>
+            <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">TARGET</span>
+              <span class="na">value</span><span class="pi">:</span> <span class="pi">{{</span> <span class="nv">.Values.targetUrl</span> <span class="pi">}}</span>
+            <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">METHOD</span>
+              <span class="na">value</span><span class="pi">:</span> <span class="pi">{{</span> <span class="nv">.Values.httpMethod</span> <span class="pi">}}</span>
+            <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">INTERVAL</span>
+              <span class="na">value</span><span class="pi">:</span> <span class="pi">{{</span> <span class="nv">.Values.pingIntervalMilliseconds | quote</span> <span class="pi">}}</span>
+</code></pre></div></div>
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">quote</code> : 삽입된 값의 앞뒤로 따옴표가 없을 때 따옴표를 붙여주는 역할 수행</li>
+</ul>
+
+<p><br></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>helm install --set targetUrl=kiamol.net wp2 web-ping/
+</code></pre></div></div>
+<ul>
+  <li>요청 대상 url을 달리하여 wp2라는 이름으로 릴리즈 추가 배치</li>
+</ul>
+
+<p><br></p>
+
+<ul>
+  <li>차트에 포함된 템플릿을 대상으로는 kubectl apply 명령 사용 불가
+    <ul>
+      <li>템플릿 변수 때문에 유효하지 못한 yaml 파일로 인식함</li>
+    </ul>
+  </li>
+  <li>리포지토리는 웹 서버에 저장된 차트와 버전의 정보가 담긴 index.yaml 파일임
+    <ul>
+      <li>
+<code class="language-plaintext highlighter-rouge">ChartMuseum</code> 이라는 오픈소스를 통해 리포지토리 호스팅 가능</li>
+    </ul>
+  </li>
+</ul>
+
+<p><br></p>
+
+<h4 id="차트-리포지토리에-배포">차트 리포지토리에 배포</h4>
+<p>1) 차트 패키징 <br>
+   <code class="language-plaintext highlighter-rouge">helm package web-ping</code>
+<br>
+2) 패키징 된 압축 파일 차트 뮤지엄에 업로드 <br>
+   <code class="language-plaintext highlighter-rouge">curl --data-binary "@web-ping-0.1.0.tgz" {차트 뮤지엄 url}</code>
+<br>
+3) 리포지토리 인덱스에 새로운 차트 정보 추가 -&gt; 차트 뮤지엄이 대신 해줌
+<br>
+4) 차트가 추가 되었는지 확인 가능 <br>
+<code class="language-plaintext highlighter-rouge">curl {차트 뮤지엄 주소}/index.yaml</code></p>
+
+<p><br></p>
+
+<h4 id="설정-값-파일을-사용하여-차트를-설치">설정 값 파일을 사용하여 차트를 설치</h4>
+<p><code class="language-plaintext highlighter-rouge">helm install -f web-ping-values.yaml wp3 local/web-ping</code></p>
+<ul>
+  <li>환경 별로 설정 값 따로 저장 가능</li>
+  <li>버전 지정하지 않으면 가장 최신 차트가 설치됨</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="차트-간-의존-관계-모델링">차트 간 의존 관계 모델링</h3>
+
+<p><strong>Chart.yaml</strong></p>
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">apiVersion</span><span class="pi">:</span> <span class="s">v2</span> <span class="c1"># 헬름 정의 규격 버전</span>
+<span class="na">name</span><span class="pi">:</span> <span class="s">pi</span> <span class="c1"># 차트 이름</span>
+<span class="na">description</span><span class="pi">:</span> <span class="s">A Pi calculator</span> 
+<span class="na">type</span><span class="pi">:</span> <span class="s">application</span>
+<span class="na">version</span><span class="pi">:</span> <span class="s">0.1.0</span> <span class="c1"># 차트 버전</span>
+<span class="na">dependencies</span><span class="pi">:</span> <span class="c1"># 이 차트가 의존하는 다른 차트</span>
+  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">vweb</span> <span class="c1"># 의존 차트 이름</span>
+    <span class="na">version</span><span class="pi">:</span> <span class="s">2.0.0</span>
+    <span class="na">repository</span><span class="pi">:</span> <span class="s">https://kiamol.net</span> <span class="c1"># 차트 출처가 리포지토리</span>
+    <span class="na">condition</span><span class="pi">:</span> <span class="s">vweb.enabled</span> <span class="c1"># 필요할 때만 설치 </span>
+  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">proxy</span> <span class="c1"># 의존 차트 이름</span>
+    <span class="na">version</span><span class="pi">:</span> <span class="s">0.1.0</span>
+    <span class="na">repository</span><span class="pi">:</span> <span class="s">file://../proxy</span> <span class="c1"># 로컬 디렉토리에만 있는 차트</span>
+    <span class="na">condition</span><span class="pi">:</span> <span class="s">proxy.enabled</span> <span class="c1"># 필요할 때만 설치</span>
+</code></pre></div></div>
+<ul>
+  <li>상위 차트 <code class="language-plaintext highlighter-rouge">pi</code>가 하위 차트 <code class="language-plaintext highlighter-rouge">proxy, vweb</code>을 의존하는 관계</li>
+  <li>proxy 차트를 의존 차트로 사용하기 위해서 상의 차트 정의에서 의존 차트 목록에 추가하여 하위 차트로 삼아야 함</li>
+  <li>이후 하위 차트 설정 값을 상위 차트의 정의 에서 지정</li>
+</ul>
+
+<p><strong>values.yaml</strong></p>
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># number of app Pods to run</span>
+<span class="na">replicaCount</span><span class="pi">:</span> <span class="m">2</span>
+<span class="c1"># type of the app Service:</span>
+<span class="na">serviceType</span><span class="pi">:</span> <span class="s">LoadBalancer</span>
+<span class="c1"># settings for vweb</span>
+<span class="na">vweb</span><span class="pi">:</span>
+   <span class="c1"># whether to deploy vweb</span>
+   <span class="na">enabled</span><span class="pi">:</span> <span class="kc">false</span>    
+<span class="c1"># settings for the reverse proxy</span>
+<span class="na">proxy</span><span class="pi">:</span> <span class="c1"># proxy 설정 값</span>
+  <span class="c1"># whether to deploy the proxy</span>
+  <span class="na">enabled</span><span class="pi">:</span> <span class="kc">false</span>
+  <span class="c1"># name of the app Service to proxy</span>
+  <span class="na">upstreamToProxy</span><span class="pi">:</span> <span class="s2">"</span><span class="s">{{</span><span class="nv"> </span><span class="s">.Release.Name</span><span class="nv"> </span><span class="s">}}-web"</span> 
+  <span class="c1"># port of the proxy Service</span>
+  <span class="na">servicePort</span><span class="pi">:</span> <span class="m">8030</span>
+  <span class="c1"># number of proxy Pods to run</span>
+  <span class="na">replicaCount</span><span class="pi">:</span> <span class="m">2</span>
+</code></pre></div></div>
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">upstreamToProxy: "{{ .Release.Name }}-web"</code>
+    <ul>
+      <li>pi 애플리케이션 서비스 명과 일치시키기 위해 템플릿 변수 사용</li>
+    </ul>
+  </li>
+  <li>하위 차트 설정 값 참조 시 설정 값 이름 앞에 차트 이름 붙임
+    <ul>
+      <li>ex) proxy.upstreamToProxy</li>
+    </ul>
+  </li>
+  <li>현재 proxy에 대한 의존성 condition은 <code class="language-plaintext highlighter-rouge">proxy.enabled</code>를 참조하고 있고, enabled 값이 false이므로 하위 차트 정의가 무시됨</li>
+</ul>
+
+<p><br></p>
+
+<ul>
+  <li>차트를 설치하거나 패키징 하려면 의존하는 하위 차트를 사용할 수 있어야 함
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">helm dependency build pi</code></li>
+    </ul>
+  </li>
+  <li>의존 차트 빌드 시 원격 리포지토리의 차트를 내려받거나 로컬 차트가 압축 되어 상위 차트 디렉토리 아래에 복사됨
+    <ul>
+      <li>pi/charts에 <code class="language-plaintext highlighter-rouge">proxy-0.1.0.tgz</code>, <code class="language-plaintext highlighter-rouge">vweb-2.0.0.tgz</code> 생성됨</li>
+    </ul>
+  </li>
+  <li>
+<code class="language-plaintext highlighter-rouge">helm install --set serviceType=ClusterIP --set proxy.enabled=true pi1 ./pi</code>
+    <ul>
+      <li>상위 차트 설치 시 하위 차트의 압축을 풀어서 함께 설치</li>
+    </ul>
+  </li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="헬름-릴리즈의-업그레이드와-롤백">헬름 릴리즈의 업그레이드와 롤백</h3>
+<ul>
+  <li>현재 vweb 차트 1.0.0 버전이 설치된 상태</li>
+  <li>새 버전의 차트의 설정 값 확인
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">helm show values kiamol/vweb --version 2.0.0</code></li>
+    </ul>
+  </li>
+  <li>기존 릴리즈 설정 값을 재사용하여 버전 2.0.0 업그레이드
+    <ul>
+      <li>
+<code class="language-plaintext highlighter-rouge">helm upgrade --reuse-values --atomic vweb kiamol/vweb --version 2.0.0</code>
+        <ul>
+          <li>
+<code class="language-plaintext highlighter-rouge">--atomic</code> : 모든 리소스의 업그레이드를 기다리다가 일부 실패 시 전부 롤백</li>
+          <li>릴리즈 명은 기존과 동일해야 함. 다를 경우 upgrade가 아닌 install 사용</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>버전 2.0.0에는 serviceType이라는 새로운 설정 값이 존재하여 기존 설정 값을 재사용하여 업그레이드 실패
+    <ul>
+      <li>업그레이드 실패 시 자동으로 이전 버전으로 롤백</li>
+    </ul>
+  </li>
+</ul>
+
+<p><br></p>
+
+<ul>
+  <li>릴리즈 히스토리 확인 가능
+    <div class="language-plaintext highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code>helm history vweb
+</code></pre></div>    </div>
+  </li>
+  <li>현재 릴리즈의 설정 값 적용
+    <div class="language-plaintext highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code>helm get values vweb -o yaml &gt; vweb-valuse.yaml
+helm upgrade -f vweb-values.yaml --atomic vweb kiamol/vweb --version 2.0.0
+</code></pre></div>    </div>
+  </li>
+  <li>롤백은 리비전을 지정해서 확인
+    <div class="language-plaintext highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code>helm rollback vweb 2
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="헬름-사용에-대한-고찰">헬름 사용에 대한 고찰</h3>
+<ul>
+  <li>매니페스트 파일을 한 번 템플릿 변수로 구성하면 이전으로 돌리기 어려움</li>
+  <li>따라서 팀에서 helm 사용 시 모두가 함께 사용해야 함</li>
+</ul>
+
+
+
+    </div>
+
+</article>
+<div class="post-nav">
+<span></span><a class="next" href="/kafka/2024/08/02/kafka-core1.html" title="Apache Kafka 기초">
+          <div>Apache Kafka 기초</div>
+        </a>
+</div>
+<div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li class="">
+          <a class="post-link" href="/kafka/2024/08/02/kafka-producer.html" title="Kafka Producer">
+            Kafka Producer<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="">
+          <a class="post-link" href="/kafka/2024/08/11/zookeeper.html" title="Zookeeper 연동">
+            Zookeeper 연동<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="">
+          <a class="post-link" href="/kafka/2024/08/06/kafka-consumer.html" title="Kafka Consumer">
+            Kafka Consumer<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="">
+          <a class="post-link" href="/kubernetes/2024/09/07/service.html" title="네트워크를 통해 서비스에 파드 연결">
+            네트워크를 통해 서비스에 파드 연결<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+</ul>
+    </div>
+<div class="post-comments"></div></section>
+</div>
+
+
+  </section>
+  <section class="sidebar" style="margin-left: 15px;">
+    <!-- Get sidebar items --><style type="text/css" media="screen">
+.post-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+</style>
+
+<div class="post-menu">
+  <div class="post-menu-title">TOC</div>
+  <div class="post-menu-content"></div>
+</div>
+
+<script>
+  function generateContent() {
+    var menu = document.querySelector(".post-menu");
+    var menuContent =  menu.querySelector(".post-menu-content");
+    var headings = document.querySelector(".post-content").querySelectorAll("h2, h3, h4, h5, h6");
+
+    // Hide menu when no headings
+    if (headings.length === 0) {
+      return menu.style.display = "none";
+    }
+
+    // Generate post menu
+    var menuHTML = '';
+    for (var i = 0; i < headings.length; i++) {
+      var h = headings[i];
+      menuHTML += (
+        '<li class="h-' + h.tagName.toLowerCase() + '">'
+        + '<a href="#h-' + h.getAttribute('id') + '">' + h.textContent + '</a></li>');
+    }
+
+    menuContent.innerHTML = '<ul>' + menuHTML + '</ul>';
+
+    // The header element
+    var header = document.querySelector('header.site-header');
+
+    function doMenuCollapse(index, over_items) {
+      var items = menuContent.firstChild.children;
+
+      if (over_items == undefined) {
+        over_items = 20;
+      }
+
+      if (items.length < over_items) {
+        return;
+      }
+
+      var activeItem = items[index];
+      var beginItem = activeItem
+      var endItem = activeItem
+      var beginIndex = index;
+      var endIndex = index + 1;
+      while (beginIndex >= 0
+        && !items[beginIndex].classList.contains('h-h2')) {
+        beginIndex -= 1;
+      }
+      while (endIndex < items.length
+        && !items[endIndex].classList.contains('h-h2')) {
+        endIndex += 1;
+      }
+      for (var i = 0; i < beginIndex; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+      for (var i = beginIndex + 1; i < endIndex; i++) {
+        item = items[i]
+        // if (!item.classList.contains('h-h2')) {
+          item.style.display = '';
+        // }
+      }
+      for (var i = endIndex; i < items.length; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+    }
+
+    // Init menu collapsed
+    doMenuCollapse(-1);
+
+    // Active the menu item
+    window.addEventListener('scroll', function (event) {
+      var lastActive = menuContent.querySelector('.active');
+      var changed = true;
+      var activeIndex = -1;
+      for (var i = headings.length - 1; i >= 0; i--) {
+        var h = headings[i];
+        var headingRect = h.getBoundingClientRect();
+        var headerRect = header.getBoundingClientRect();
+        var headerTop = Math.floor(headerRect.top);
+        var headerHeight = Math.floor(headerRect.height);
+        var headerHeight = headerTop + headerHeight + 20;
+        if (headingRect.top <= headerHeight) {
+          var id = 'h-' + h.getAttribute('id');
+          var a = menuContent.querySelector('a[href="#' + id  + '"]');
+          var curActive = a.parentNode;
+          if (curActive) {
+            curActive.classList.add('active');
+            activeIndex = i;
+          }
+          if (lastActive == curActive) {
+            changed = false;
+          }
+          break;
+        }
+      }
+      if (changed) {
+        if (lastActive) {
+          lastActive.classList.remove('active');
+        }
+        doMenuCollapse(activeIndex);
+      }
+      event.preventDefault();
+    });
+  }
+  generateContent();
+</script>
+</section>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+    <div class="site-footer-inner">
+<div>Unpublished Work <span class="copyleft">©</span> 2023-2026 hyunjune</div>
+      <div class="footer-col rss-subscribe">Subscribe <a href="/feed.xml">via RSS</a>
+</div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

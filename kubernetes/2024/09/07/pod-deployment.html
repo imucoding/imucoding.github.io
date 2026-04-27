@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>파드와 디플로이먼트로 컨테이너 시작 | IMU TECH BLOG</title>
+<meta name="generator" content="Jekyll v4.4.1">
+<meta property="og:title" content="파드와 디플로이먼트로 컨테이너 시작">
+<meta name="author" content="Hyunjune">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="쿠버네티스 이해 마스터 노드 (control plain) 클러스터 노드, 파드 관리 워커 노드 (data plane) 컨테이너 실행 kubeadm init 으로 클러스터 초기화하여 새로운 마스터 노드 생성 마스터 노드는 기본적으로 컨테이너를 실행할 수 없지만 설정을 통해 가능하도록 할 수 있음 kubectl은 마스터 노드의 api server에 요청하고 api server는 각 워커 노드에 설치된 kubelet과 통신하여 각 worker 노드에서 pod를 실행하도록 함 마스터 노드의 scheduler가 어떤 워커노드에 pod를 배정할 지 결정">
+<meta property="og:description" content="쿠버네티스 이해 마스터 노드 (control plain) 클러스터 노드, 파드 관리 워커 노드 (data plane) 컨테이너 실행 kubeadm init 으로 클러스터 초기화하여 새로운 마스터 노드 생성 마스터 노드는 기본적으로 컨테이너를 실행할 수 없지만 설정을 통해 가능하도록 할 수 있음 kubectl은 마스터 노드의 api server에 요청하고 api server는 각 워커 노드에 설치된 kubelet과 통신하여 각 worker 노드에서 pod를 실행하도록 함 마스터 노드의 scheduler가 어떤 워커노드에 pod를 배정할 지 결정">
+<link rel="canonical" href="https://imucoding.github.io/kubernetes/2024/09/07/pod-deployment.html">
+<meta property="og:url" content="https://imucoding.github.io/kubernetes/2024/09/07/pod-deployment.html">
+<meta property="og:site_name" content="IMU TECH BLOG">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2024-09-07T00:00:00+00:00">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="파드와 디플로이먼트로 컨테이너 시작">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Hyunjune"},"dateModified":"2024-09-07T00:00:00+00:00","datePublished":"2024-09-07T00:00:00+00:00","description":"쿠버네티스 이해 마스터 노드 (control plain) 클러스터 노드, 파드 관리 워커 노드 (data plane) 컨테이너 실행 kubeadm init 으로 클러스터 초기화하여 새로운 마스터 노드 생성 마스터 노드는 기본적으로 컨테이너를 실행할 수 없지만 설정을 통해 가능하도록 할 수 있음 kubectl은 마스터 노드의 api server에 요청하고 api server는 각 워커 노드에 설치된 kubelet과 통신하여 각 worker 노드에서 pod를 실행하도록 함 마스터 노드의 scheduler가 어떤 워커노드에 pod를 배정할 지 결정","headline":"파드와 디플로이먼트로 컨테이너 시작","mainEntityOfPage":{"@type":"WebPage","@id":"https://imucoding.github.io/kubernetes/2024/09/07/pod-deployment.html"},"url":"https://imucoding.github.io/kubernetes/2024/09/07/pod-deployment.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="icon" href="">
+  <link rel="canonical" href="https://imucoding.github.io">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-noto-sans@0.0.72/index.min.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <script src="/assets/js/main.js"></script><link type="application/atom+xml" rel="alternate" href="https://imucoding.github.io/feed.xml" title="IMU TECH BLOG">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/languages/go.min.js" async></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// Init highlight js
+document.addEventListener('DOMContentLoaded', function(event) {
+  var els = document.querySelectorAll('pre code')
+
+  function addLangData(block) {
+    var outer = block.parentElement.parentElement.parentElement;
+    var lang = block.getAttribute('data-lang');
+    for (var i = 0; i < outer.classList.length; i++) {
+      var cls = outer.classList[i];
+      if (cls.startsWith('language-')) {
+        lang = cls;
+        break;
+      }
+    }
+    if (!lang) {
+      cls = block.getAttribute('class');
+      lang = cls ? cls.replace('hljs ', '') : '';
+    }
+    if (lang.startsWith('language-')) {
+      lang = lang.substr(9);
+    }
+    block.setAttribute('class', 'hljs ' + lang);
+    block.parentNode.setAttribute('data-lang', lang);
+  }
+
+  function addBadge(block) {
+    var enabled = ('true' || 'true').toLowerCase();
+    if (enabled == 'true') {
+      var pre = block.parentElement;
+      pre.classList.add('badge');
+    }
+  }
+
+  function handle(block) {
+    addLangData(block);
+    addBadge(block)
+    hljs.highlightBlock(block);
+  }
+
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    handle(el);
+  }
+});
+</script>
+
+<style>
+  /* code language badge */
+  pre.badge::before {
+    content: attr(data-lang);
+    color: #fff;
+    background-color: #ff4e00;
+    padding: 0 .5em;
+    border-radius: 0 2px;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 32px;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+  }
+
+  /* fix wrong badge display for firefox browser */
+  code > table pre::before {
+    display: none;
+  }
+</style>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe-lightbox.umd.min.js" async></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe.umd.min.js" async></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe.min.css" rel="stylesheet">
+<style>
+  .pswp .pswp__container .pswp__img {
+    background-color: white;
+  }
+</style>
+
+<script>
+  function initPhotoSwipe() {
+    let customOptions = {};
+
+    try {
+      const data = ``.replaceAll("=>", ":");
+      customOptions = JSON.parse(data);
+    } catch (e) {
+      console.info("Invalid custom photo previewer options! " + e.message);
+    }
+
+    // Define object and gallery options
+    const options = Object.assign(
+      {
+        gallery: "section.main",
+        children: "a.photo-swipe",
+        photo_scale: 2,
+        // dynamic import is not supported in UMD version
+        pswpModule: PhotoSwipe,
+      },
+      customOptions
+    );
+
+    const galleryEl = document.querySelector(options.gallery);
+    if (!galleryEl) {
+      return;
+    }
+
+    const imgEls = [];
+    const els = galleryEl.querySelectorAll("img:not(.emoji)");
+    els.forEach((el) => {
+      if (el.src.trim() == "") {
+        return;
+      }
+      if (!imgEls.includes(el)) {
+        imgEls.push(el);
+      }
+    });
+
+    if (imgEls.length === 0) {
+      return;
+    }
+
+    imgEls.forEach((imgEl) => {
+      imgEl.outerHTML = `
+      <a class="photo-swipe"
+        href="${imgEl.src}"
+        data-pswp-width="${
+          Math.max(imgEl.naturalWidth, imgEl.width) * options.photo_scale
+        }"
+        data-pswp-height="${
+          Math.max(imgEl.naturalHeight, imgEl.height) * options.photo_scale
+        }"
+        data-pswp-caption="${imgEl.getAttribute("caption") || imgEl.alt}"
+        target="_blank">
+        ${imgEl.outerHTML}
+      </a>`;
+    });
+
+    // Initialize PhotoSwipe 5
+    var lightbox = new PhotoSwipeLightbox(options);
+
+    lightbox.init();
+  }
+
+  window.addEventListener("load", initPhotoSwipe);
+</script>
+
+<meta name="google-site-verification" content="d_7fHqoWfEPFWDaXJ19fg2f5xy6BPZbrY4fbsJjIUSI">
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="site-header " role="banner">
+
+  <div class="wrapper">
+    <div class="site-header-inner">
+<span class="site-brand"><a class="site-brand-inner" rel="author" href="/">
+  <img class="site-favicon" title="IMU TECH BLOG" src="" onerror="this.style.display='none'">
+  IMU TECH BLOG
+</a>
+</span><nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger">
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewbox="0 0 18 15" width="18px" height="15px">
+                <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"></path>
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger">
+<a class="page-link" href="/about.html">ABOUT</a><a class="page-link" href="/archives.html">ARCHIVES</a><a class="page-link" href="/categories.html">CATEGORIES</a><a class="page-link" href="/">HOME</a><a class="page-link" href="/tags.html">TAGS</a>
+
+
+
+
+
+
+
+
+
+<div class="page-link" style="display: inline;">
+
+
+
+<div id="google_translate_element" style="display: none;">
+</div>
+
+<div class="ct-language">
+  <ul class="list-unstyled ct-language-dropdown">
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="en">
+          
+          <img src="https://cdn.countryflags.com/thumbs/united-states-of-america/flag-400.png" title="English">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="fr">
+          
+          <img src="https://cdn.countryflags.com/thumbs/france/flag-400.png" title="French">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="zh-CN">
+          
+          <img src="https://cdn.countryflags.com/thumbs/china/flag-400.png" title="Chinese(Simple)">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ja">
+          
+          <img src="https://cdn.countryflags.com/thumbs/japan/flag-400.png" title="Japanese">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ko">
+          
+          <img src="https://cdn.countryflags.com/thumbs/south-korea/flag-400.png" title="Korean">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ru">
+          
+          <img src="https://cdn.countryflags.com/thumbs/russia/flag-400.png" title="Russian">
+          
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    autoDisplay: false,
+    layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+  }, 'google_translate_element');
+
+  // Links to cross-origin destinations are unsafe
+  var gll = document.getElementsByClassName('goog-logo-link')[0];
+  if (gll) {
+    gll.setAttribute('rel', 'noopener');
+  }
+
+  function restoreLang() {
+    var iframe = document.getElementsByClassName('goog-te-banner-frame')[0];
+    if (!iframe) return;
+
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    var restore_el = innerDoc.getElementsByTagName("button");
+
+    for (var i = 0; i < restore_el.length; i++) {
+      if (restore_el[i].id.indexOf("restore") >= 0) {
+        restore_el[i].click();
+        var close_el = innerDoc.getElementsByClassName("goog-close-link");
+        close_el[0].click();
+        return;
+      }
+    }
+  }
+
+  function triggerHtmlEvent(element, eventName) {
+    var event;
+    if (document.createEvent) {
+      event = document.createEvent('HTMLEvents');
+      event.initEvent(eventName, true, true);
+      element.dispatchEvent(event);
+    } else {
+      event = document.createEventObject();
+      event.eventType = eventName;
+      element.fireEvent('on' + event.eventType, event);
+    }
+  }
+
+  var googleCombo = document.querySelector("select.goog-te-combo");
+  var langSelect = document.querySelector('.ct-language');
+  langSelect.addEventListener('click', function(event) {
+    if (!event.target) {
+      return;
+    }
+
+    var selected = document.querySelector('.ct-language .ct-language-selected');
+    if (selected) {
+      selected.classList.remove('ct-language-selected');
+    }
+
+    var target = event.target;
+    while (target && target !== langSelect ) {
+      if (target.matches('.lang-select')) {
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (target && target.matches('.lang-select')) {
+      var lang = target.getAttribute('data-lang');
+      if (googleCombo.value == lang) {
+        restoreLang();
+      } else {
+        target.parentElement.classList.add('ct-language-selected');
+        googleCombo.value = lang;
+        triggerHtmlEvent(googleCombo, 'change');
+      }
+    }
+
+    event.preventDefault();
+  });
+}
+</script>
+
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+</div>
+</div>
+        </nav>
+</div>
+  </div>
+</header>
+
+<script>
+  function initHeader() {
+    var lastScrollY = getScrollPos().y;
+    var documentElement = document.documentElement;
+
+    function storeScrollData() {
+      var y = getScrollPos().y;var scrollStatus = "";
+
+      if (y <= 0) {
+        scrollStatus = "top";
+      } else if ((window.innerHeight + y) >= document.body.offsetHeight) {
+        scrollStatus = "bottom";
+      } else {
+        var isScrollDown = (y - lastScrollY > 0) ? true : false;
+        scrollStatus = isScrollDown ? "down" : "up";
+      }
+
+      lastScrollY = y;
+      documentElement.setAttribute("data-scroll-status", scrollStatus);
+    }
+
+    window.addEventListener('scroll', function(e) {
+      storeScrollData();
+    });
+
+    storeScrollData();
+  }
+  document.addEventListener('DOMContentLoaded', initHeader);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  function hashLocate(hashValue) {
+    hashValue = hashValue.replace(/^.*#h-/, '');
+    hashValue = decodeURIComponent(hashValue);
+    var element = document.getElementById(hashValue);
+
+    if (!element) {
+      return;
+    }
+
+    var header = document.querySelector('header.site-header');
+    var headerRect = header.getBoundingClientRect();
+    var headerTop = Math.floor(headerRect.top);
+    var headerHeight = Math.floor(headerRect.height);
+    var scrollPos = getScrollPos();
+    var offsetY = element.offsetTop - (headerTop + headerHeight + 20);
+
+    if (offsetY == scrollPos.y) {
+      return;
+    }
+
+    if (headerTop == 0  && offsetY > scrollPos.y) {
+      offsetY += headerHeight + 2;
+    } else if (headerTop < 0  && offsetY < scrollPos.y) {
+      offsetY -= headerHeight - 2;
+    }
+
+    smoothScrollTo(offsetY);
+  }
+
+  // The first event occurred
+  window.addEventListener('load', function(event) {
+    if (window.location.hash) {
+      hashLocate(window.location.hash);
+    }
+  });
+
+  // The first event occurred
+  window.addEventListener('click', function(event) {
+    if (event.target.tagName.toLowerCase() == 'a') {
+      hashLocate(event.target.getAttribute('href'));
+    }
+  });
+</script>
+<div class="theme-toggle">
+  <input type="checkbox" id="theme-switch">
+  <label for="theme-switch">
+    <div class="toggle"></div>
+    <div class="names">
+      <p class="light">Light</p>
+      <p class="dark">Dark</p>
+    </div>
+  </label>
+</div>
+
+
+
+
+<script>
+  (function() {
+    var sw = document.getElementById('theme-switch');
+    var html = document.getElementsByTagName('html')[0];
+    var nightModeOption = ('manual' || 'auto').toLowerCase();
+    var storage = nightModeOption === 'manual'
+        ? localStorage
+        : sessionStorage;
+    var themeData = loadThemeData();
+
+    function saveThemeData(data) {
+      storage.setItem('theme', JSON.stringify(data));
+    }
+
+    function loadThemeData() {
+      var data = storage.getItem('theme');
+      try {
+        data = JSON.parse(data ? data : '');
+      } catch(e) {
+        data = { nightShift: undefined, autoToggleAt: 0 };
+        saveThemeData(data);
+      }
+      return data;
+    }
+
+    function handleThemeToggle(nightShift) {
+      themeData.nightShift = nightShift;
+      saveThemeData(themeData);
+      html.dataset.theme = nightShift ? 'dark' : 'light';
+      setTimeout(function() {
+        sw.checked = nightShift ? true : false;
+        document.dispatchEvent(new Event('theme-changed'));
+      }, 50);
+    }
+
+    function autoThemeToggle() {
+      // Next time point of theme toggle
+      var now = new Date();
+      var toggleAt = new Date();
+      var hours = now.getHours();
+      var nightShift = hours >= 19 || hours <=7;
+
+      if (nightShift) {
+        if (hours > 7) {
+          toggleAt.setDate(toggleAt.getDate() + 1);
+        }
+        toggleAt.setHours(7);
+      } else {
+        toggleAt.setHours(19);
+      }
+
+      toggleAt.setMinutes(0);
+      toggleAt.setSeconds(0);
+      toggleAt.setMilliseconds(0)
+
+      var delay = toggleAt.getTime() - now.getTime();
+
+      // auto toggle theme mode
+      setTimeout(function() {
+        handleThemeToggle(!nightShift);
+      }, delay);
+
+      return {
+        nightShift: nightShift,
+        toggleAt: toggleAt.getTime()
+      };
+    }
+
+    // Listen the theme toggle event
+    sw.addEventListener('change', function(event) {
+      handleThemeToggle(event.target.checked);
+    });
+
+    if (nightModeOption == 'auto') {
+      var data = autoThemeToggle();
+
+      // Toggle theme by local setting
+      if (data.toggleAt > themeData.autoToggleAt) {
+        themeData.autoToggleAt = data.toggleAt;
+        handleThemeToggle(data.nightShift);
+      } else {
+        handleThemeToggle(themeData.nightShift);
+      }
+    } else if (nightModeOption == 'manual') {
+      handleThemeToggle(themeData.nightShift);
+    } else {
+      var nightShift = themeData.nightShift;
+      if (nightShift === undefined) {
+        nightShift = nightModeOption === 'on';
+      }
+      handleThemeToggle(nightShift);
+    }
+  })();
+</script>
+<div id="click-to-top" class="click-to-top">
+  <i class="fa fa-arrow-up"></i>
+</div>
+<script>
+  (function () {
+    const clickToTop = document.getElementById('click-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        clickToTop.classList.add('show')
+      }else {
+        clickToTop.classList.remove('show')
+      }
+    });
+    clickToTop.addEventListener('click', () => {
+      window.smoothScrollTo(0);
+    });
+  })();
+</script>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="framework">
+  <section class="main">
+
+     <div class="post">
+  <section>
+
+
+
+
+
+
+
+
+
+<header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">파드와 디플로이먼트로 컨테이너 시작</h1>
+  <h2 class="post-subtitle"></h2>
+
+  <div class="post-meta">
+    <time class="dt-published" datetime="2024-09-07T00:00:00+00:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Sep 07, 2024
+    </time><span class="post-author left-vsplit"><i class="fa fa-pencil"></i> Hyunjune</span>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 4 mins</span>
+  </div>
+<div class="post-tags">
+<a class="post-tag" href="/tags.html#pod">#pod</a><a class="post-tag" href="/tags.html#deployment">#deployment</a>
+</div></header>
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <div class="post-content e-content" itemprop="articleBody">
+
+      
+<h3 id="쿠버네티스-이해">쿠버네티스 이해</h3>
+<ul>
+  <li>마스터 노드 (control plain)
+    <ul>
+      <li>클러스터 노드, 파드 관리</li>
+    </ul>
+  </li>
+  <li>워커 노드 (data plane)
+    <ul>
+      <li>컨테이너 실행</li>
+    </ul>
+  </li>
+  <li>
+<code class="language-plaintext highlighter-rouge">kubeadm init</code> 으로 클러스터 초기화하여 새로운 마스터 노드 생성</li>
+  <li>마스터 노드는 기본적으로 컨테이너를 실행할 수 없지만 설정을 통해 가능하도록 할 수 있음</li>
+  <li>kubectl은 마스터 노드의 api server에 요청하고 api server는 각 워커 노드에 설치된 <code class="language-plaintext highlighter-rouge">kubelet</code>과 통신하여 각 worker 노드에서 pod를 실행하도록 함</li>
+  <li>마스터 노드의 scheduler가 어떤 워커노드에 pod를 배정할 지 결정</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="컨테이너-실행">컨테이너 실행</h3>
+<ul>
+  <li>간단한 pod는 yaml 파일 없이 직접 실행 가능
+    <div class="language-plaintext highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code>kubectl run hello-kiamol --image=kiamol/ch02-hello-kiamol
+kubectl wait --for=condition=Ready pod hello-kiamol  // Ready 될 때까지 I/O 대기
+kubectl get pods
+kubectl describe pod hello-kiamol // 상세 정보 확인 가능
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<h4 id="포트-포워딩">포트 포워딩</h4>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl port-forward pod/hello-kiamol 8080:80
+</code></pre></div></div>
+<ul>
+  <li>host PC port -&gt; pod port</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="컨트롤러-객체">컨트롤러 객체</h3>
+<ul>
+  <li>파드가 여러 노드에서 실행되다가 어떤 노드가 고장 발생 시 파드를 복구해주지 않음</li>
+  <li>또한 파드가 여러 노드에 고르게 흩어져서 실행된다는 보장이 없으므로 사람이 직접 개입해야하고 오케스트레이션 도구 사용의 의미가 없음</li>
+  <li>따라서 컨트롤러 객체를 사용해야 하고 파드를 관리하는 컨트롤러 객체는 디플로이먼트
+    <ul>
+      <li>
+<code class="language-plaintext highlighter-rouge">컨트롤러 객체</code> : 다른 리소스를 관리하는 쿠버네티스 리소스</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl create deployment hello-kiamol --image=kiamol/ch02-hello-kiamol
+</code></pre></div></div>
+<ul>
+  <li>pod와 달리 run이 아닌 create로 생성</li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl get pods
+
+Name                      Ready      Status      Restarts      Age
+hello-kiamol-21562342      1/1       Running         0         10s
+</code></pre></div></div>
+<ul>
+  <li>k8s가 디플로이먼트 이름 뒤 무작위 문자열을 붙여서 pod 생성</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="deployment의-pod-관리">Deployment의 Pod 관리</h3>
+<ul>
+  <li>모든 쿠버네티스 리소스 (deployment, pod …) 은 key-value 쌍의 label을 가짐</li>
+  <li>deployment는 자신의 selector와 label이 일치하는 pod를 관리함</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">kubectl describe deploy heelo-kiamol</code>에서 label과 selector를 확인해보면 둘다 <code class="language-plaintext highlighter-rouge">app:hello-kiamol</code>임을 알 수 있음
+    <ul>
+      <li>본인의 label과 동일하게 selector를 지정하였고 이 selector를 pod에 부여함</li>
+    </ul>
+  </li>
+  <li>
+<code class="language-plaintext highlighter-rouge">kubectl get pods -l app=hello-kiamol</code>
+    <ul>
+      <li>app:hello-kiamol의 label을 가진 pod 조회</li>
+    </ul>
+  </li>
+  <li>만약 pod의 label을 변경한다면 deployment의 관리에서 벗어남
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">kubectl label pods -l app-hello-kiamol --overwrite app=x</code></li>
+    </ul>
+  </li>
+  <li>pod를 다시 조회해보면 새로운 pod가 생성되었음이 확인되는데 deployment가 label selector와 일치하는 pod가 사라졌기 때문에 새로운 pod 생성
+    <ul>
+      <li>만약 관리가 벗어난 pod의 app:x 레이블을 원래대로 복원 시 새로 생성한 pod가 삭제됨 (1개 pod 유지)</li>
+    </ul>
+  </li>
+  <li>
+<code class="language-plaintext highlighter-rouge">kubectl port-forward deploy/hello-kiamol 8080:80</code>
+    <ul>
+      <li>deployment를 port forwarding 시키면 deployment는 자신이 가진 pod 중 1개를 트래픽 전달 대상으로 삼음</li>
+    </ul>
+  </li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="애플리케이션-manifest에-배포-정의">애플리케이션 manifest에 배포 정의</h3>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># pod.yaml</span>
+
+<span class="na">apiVersion</span><span class="pi">:</span> <span class="s">v1</span> <span class="c1"># k8s API version</span>
+<span class="na">kind</span><span class="pi">:</span> <span class="s">Pod</span> <span class="c1"># 리소스 유형</span>
+<span class="na">metadata</span><span class="pi">:</span> <span class="c1"># 리소스에서 메타데이터는 name(필수)과 label(비필수)가 존재</span>
+  <span class="na">name</span><span class="pi">:</span> <span class="s">hello-kiamol</span>
+<span class="na">spec</span><span class="pi">:</span> <span class="c1"># 리소스의 실제 정의 내용</span>
+  <span class="na">containers</span><span class="pi">:</span> <span class="c1"># pod는 컨테이너 정의 필요</span>
+    <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">web</span> <span class="c1"># 컨테이너는 이름과 이미지로 정의</span>
+      <span class="na">image</span><span class="pi">:</span> <span class="s">kiamol/ch02-hello-kiamol</span>
+</code></pre></div></div>
+<ul>
+  <li>리소스에 대한 버전 확인
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">kubectl explain pod</code></li>
+      <li>group / version 형식으로 apiVersion에 작성</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># deployment.yaml</span>
+
+<span class="na">apiVersion</span><span class="pi">:</span> <span class="s">apps/v1</span>
+<span class="na">kind</span><span class="pi">:</span> <span class="s">Deployment</span>
+<span class="na">metadata</span><span class="pi">:</span>
+  <span class="na">name</span><span class="pi">:</span> <span class="s">hello-kiamol</span> <span class="c1"># deployment 이름 지정</span>
+<span class="na">spec</span><span class="pi">:</span>
+  <span class="na">selector</span><span class="pi">:</span> <span class="c1"># 관리 대상 레이블 셀렉터 설정</span>
+    <span class="na">matchLabels</span><span class="pi">:</span>
+        <span class="s">app:hello-kiamol</span>
+  <span class="na">replicas</span><span class="pi">:</span> <span class="m">3</span>
+  <span class="na">template</span><span class="pi">:</span> <span class="c1"># pod 생성 시 사용</span>
+    <span class="na">metadata</span><span class="pi">:</span> <span class="c1"># pod 정의</span>
+      <span class="na">labels</span><span class="pi">:</span> <span class="c1"># pod 이름 대신 label을 지정하는데 selector와 일치해야함</span>
+        <span class="s">app:hello-kiamol</span>
+      <span class="na">spec</span><span class="pi">:</span> <span class="c1"># pod 컨테이너 정의</span>
+        <span class="na">containers</span><span class="pi">:</span>
+          <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">web</span>
+            <span class="na">image</span><span class="pi">:</span> <span class="s">kiamol/ch02-hello-kiamol</span>
+</code></pre></div></div>
+
+<p><br></p>
+<hr>
+
+<h3 id="pod에서-실행-중인-애플리케이션에-접근">Pod에서 실행 중인 애플리케이션에 접근</h3>
+<p>1) pod 접속 <br>
+  <code class="language-plaintext highlighter-rouge">kubectl exec -it hello-kiamol sh</code> <br>
+2) pod log 출력 <br>
+  <code class="language-plaintext highlighter-rouge">kubectl logs --tail=2 hello-kiamol</code> <br>
+3) deployment를 통해서 pod에서 명령 실행 <br>
+  <code class="language-plaintext highlighter-rouge">kubectl exec deploy/hello-kiamol --sh -c 'wget -O - http://localhost &gt; /dev/null</code> <br>
+4) pod 속 컨테이너에서 local로 파일 복사 <br>
+  <code class="language-plaintext highlighter-rouge">kubectl cp hello-kiamol:usr/share/nginx/html/index.html /tmp/index.html</code> <br></p>
+
+<p><br></p>
+<hr>
+
+<h3 id="쿠버네티스-리소스-관리-이해">쿠버네티스 리소스 관리 이해</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl delete pods -all
+</code></pre></div></div>
+<ul>
+  <li>모든 pod 삭제</li>
+  <li>pod 조회 시 다시 pod가 생성됨, deploy가 존재하기 때문</li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl get all
+</code></pre></div></div>
+<ul>
+  <li>모든 리소스 확인</li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl delete deploy -all
+</code></pre></div></div>
+<ul>
+  <li>deployment 삭제</li>
+</ul>
+
+
+
+    </div>
+
+</article>
+<div class="post-nav">
+<a class="previous" href="/kafka/2024/09/07/debezium.html" title="Debezium CDC Connector">
+          <div>Debezium CDC Connector</div>
+        </a><a class="next" href="/kubernetes/2024/09/07/service.html" title="네트워크를 통해 서비스에 파드 연결">
+          <div>네트워크를 통해 서비스에 파드 연결</div>
+        </a>
+</div>
+<div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li class="">
+          <a class="post-link" href="/kafka/2024/08/12/isr.html" title="ISR (In-sync Replicas)">
+            ISR (In-sync Replicas)<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="">
+          <a class="post-link" href="/kafka/2024/08/02/kafka-core1.html" title="Apache Kafka 기초">
+            Apache Kafka 기초<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="">
+          <a class="post-link" href="/kafka/2024/08/06/kafka-consumer.html" title="Kafka Consumer">
+            Kafka Consumer<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="">
+          <a class="post-link" href="/kafka/2024/08/13/segment.html" title="Partitions and Segments in Kafka Logs">
+            Partitions and Segments in Kafka Logs<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+</ul>
+    </div>
+<div class="post-comments"></div></section>
+</div>
+
+
+  </section>
+  <section class="sidebar" style="margin-left: 15px;">
+    <!-- Get sidebar items --><style type="text/css" media="screen">
+.post-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+</style>
+
+<div class="post-menu">
+  <div class="post-menu-title">TOC</div>
+  <div class="post-menu-content"></div>
+</div>
+
+<script>
+  function generateContent() {
+    var menu = document.querySelector(".post-menu");
+    var menuContent =  menu.querySelector(".post-menu-content");
+    var headings = document.querySelector(".post-content").querySelectorAll("h2, h3, h4, h5, h6");
+
+    // Hide menu when no headings
+    if (headings.length === 0) {
+      return menu.style.display = "none";
+    }
+
+    // Generate post menu
+    var menuHTML = '';
+    for (var i = 0; i < headings.length; i++) {
+      var h = headings[i];
+      menuHTML += (
+        '<li class="h-' + h.tagName.toLowerCase() + '">'
+        + '<a href="#h-' + h.getAttribute('id') + '">' + h.textContent + '</a></li>');
+    }
+
+    menuContent.innerHTML = '<ul>' + menuHTML + '</ul>';
+
+    // The header element
+    var header = document.querySelector('header.site-header');
+
+    function doMenuCollapse(index, over_items) {
+      var items = menuContent.firstChild.children;
+
+      if (over_items == undefined) {
+        over_items = 20;
+      }
+
+      if (items.length < over_items) {
+        return;
+      }
+
+      var activeItem = items[index];
+      var beginItem = activeItem
+      var endItem = activeItem
+      var beginIndex = index;
+      var endIndex = index + 1;
+      while (beginIndex >= 0
+        && !items[beginIndex].classList.contains('h-h2')) {
+        beginIndex -= 1;
+      }
+      while (endIndex < items.length
+        && !items[endIndex].classList.contains('h-h2')) {
+        endIndex += 1;
+      }
+      for (var i = 0; i < beginIndex; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+      for (var i = beginIndex + 1; i < endIndex; i++) {
+        item = items[i]
+        // if (!item.classList.contains('h-h2')) {
+          item.style.display = '';
+        // }
+      }
+      for (var i = endIndex; i < items.length; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+    }
+
+    // Init menu collapsed
+    doMenuCollapse(-1);
+
+    // Active the menu item
+    window.addEventListener('scroll', function (event) {
+      var lastActive = menuContent.querySelector('.active');
+      var changed = true;
+      var activeIndex = -1;
+      for (var i = headings.length - 1; i >= 0; i--) {
+        var h = headings[i];
+        var headingRect = h.getBoundingClientRect();
+        var headerRect = header.getBoundingClientRect();
+        var headerTop = Math.floor(headerRect.top);
+        var headerHeight = Math.floor(headerRect.height);
+        var headerHeight = headerTop + headerHeight + 20;
+        if (headingRect.top <= headerHeight) {
+          var id = 'h-' + h.getAttribute('id');
+          var a = menuContent.querySelector('a[href="#' + id  + '"]');
+          var curActive = a.parentNode;
+          if (curActive) {
+            curActive.classList.add('active');
+            activeIndex = i;
+          }
+          if (lastActive == curActive) {
+            changed = false;
+          }
+          break;
+        }
+      }
+      if (changed) {
+        if (lastActive) {
+          lastActive.classList.remove('active');
+        }
+        doMenuCollapse(activeIndex);
+      }
+      event.preventDefault();
+    });
+  }
+  generateContent();
+</script>
+</section>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+    <div class="site-footer-inner">
+<div>Unpublished Work <span class="copyleft">©</span> 2023-2026 hyunjune</div>
+      <div class="footer-col rss-subscribe">Subscribe <a href="/feed.xml">via RSS</a>
+</div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

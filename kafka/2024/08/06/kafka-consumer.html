@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Kafka Consumer | IMU TECH BLOG</title>
+<meta name="generator" content="Jekyll v4.4.1">
+<meta property="og:title" content="Kafka Consumer">
+<meta name="author" content="Hyunjune">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="Consumer 개요 브로커의 topic 메시지 읽는 역할 수행 모든 consumer 들은 고유한 group id를 가지는 consumer group에 속해야 함 Fetcher, ConsumerClientNetwork 등의 주요 내부 객체와 별도의 HeartBeat Thread를 생성">
+<meta property="og:description" content="Consumer 개요 브로커의 topic 메시지 읽는 역할 수행 모든 consumer 들은 고유한 group id를 가지는 consumer group에 속해야 함 Fetcher, ConsumerClientNetwork 등의 주요 내부 객체와 별도의 HeartBeat Thread를 생성">
+<link rel="canonical" href="https://imucoding.github.io/kafka/2024/08/06/kafka-consumer.html">
+<meta property="og:url" content="https://imucoding.github.io/kafka/2024/08/06/kafka-consumer.html">
+<meta property="og:site_name" content="IMU TECH BLOG">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2024-08-06T00:00:00+00:00">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="Kafka Consumer">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Hyunjune"},"dateModified":"2024-08-06T00:00:00+00:00","datePublished":"2024-08-06T00:00:00+00:00","description":"Consumer 개요 브로커의 topic 메시지 읽는 역할 수행 모든 consumer 들은 고유한 group id를 가지는 consumer group에 속해야 함 Fetcher, ConsumerClientNetwork 등의 주요 내부 객체와 별도의 HeartBeat Thread를 생성","headline":"Kafka Consumer","mainEntityOfPage":{"@type":"WebPage","@id":"https://imucoding.github.io/kafka/2024/08/06/kafka-consumer.html"},"url":"https://imucoding.github.io/kafka/2024/08/06/kafka-consumer.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="icon" href="">
+  <link rel="canonical" href="https://imucoding.github.io">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-noto-sans@0.0.72/index.min.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <script src="/assets/js/main.js"></script><link type="application/atom+xml" rel="alternate" href="https://imucoding.github.io/feed.xml" title="IMU TECH BLOG">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/languages/go.min.js" async></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// Init highlight js
+document.addEventListener('DOMContentLoaded', function(event) {
+  var els = document.querySelectorAll('pre code')
+
+  function addLangData(block) {
+    var outer = block.parentElement.parentElement.parentElement;
+    var lang = block.getAttribute('data-lang');
+    for (var i = 0; i < outer.classList.length; i++) {
+      var cls = outer.classList[i];
+      if (cls.startsWith('language-')) {
+        lang = cls;
+        break;
+      }
+    }
+    if (!lang) {
+      cls = block.getAttribute('class');
+      lang = cls ? cls.replace('hljs ', '') : '';
+    }
+    if (lang.startsWith('language-')) {
+      lang = lang.substr(9);
+    }
+    block.setAttribute('class', 'hljs ' + lang);
+    block.parentNode.setAttribute('data-lang', lang);
+  }
+
+  function addBadge(block) {
+    var enabled = ('true' || 'true').toLowerCase();
+    if (enabled == 'true') {
+      var pre = block.parentElement;
+      pre.classList.add('badge');
+    }
+  }
+
+  function handle(block) {
+    addLangData(block);
+    addBadge(block)
+    hljs.highlightBlock(block);
+  }
+
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    handle(el);
+  }
+});
+</script>
+
+<style>
+  /* code language badge */
+  pre.badge::before {
+    content: attr(data-lang);
+    color: #fff;
+    background-color: #ff4e00;
+    padding: 0 .5em;
+    border-radius: 0 2px;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 32px;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+  }
+
+  /* fix wrong badge display for firefox browser */
+  code > table pre::before {
+    display: none;
+  }
+</style>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe-lightbox.umd.min.js" async></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe.umd.min.js" async></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe.min.css" rel="stylesheet">
+<style>
+  .pswp .pswp__container .pswp__img {
+    background-color: white;
+  }
+</style>
+
+<script>
+  function initPhotoSwipe() {
+    let customOptions = {};
+
+    try {
+      const data = ``.replaceAll("=>", ":");
+      customOptions = JSON.parse(data);
+    } catch (e) {
+      console.info("Invalid custom photo previewer options! " + e.message);
+    }
+
+    // Define object and gallery options
+    const options = Object.assign(
+      {
+        gallery: "section.main",
+        children: "a.photo-swipe",
+        photo_scale: 2,
+        // dynamic import is not supported in UMD version
+        pswpModule: PhotoSwipe,
+      },
+      customOptions
+    );
+
+    const galleryEl = document.querySelector(options.gallery);
+    if (!galleryEl) {
+      return;
+    }
+
+    const imgEls = [];
+    const els = galleryEl.querySelectorAll("img:not(.emoji)");
+    els.forEach((el) => {
+      if (el.src.trim() == "") {
+        return;
+      }
+      if (!imgEls.includes(el)) {
+        imgEls.push(el);
+      }
+    });
+
+    if (imgEls.length === 0) {
+      return;
+    }
+
+    imgEls.forEach((imgEl) => {
+      imgEl.outerHTML = `
+      <a class="photo-swipe"
+        href="${imgEl.src}"
+        data-pswp-width="${
+          Math.max(imgEl.naturalWidth, imgEl.width) * options.photo_scale
+        }"
+        data-pswp-height="${
+          Math.max(imgEl.naturalHeight, imgEl.height) * options.photo_scale
+        }"
+        data-pswp-caption="${imgEl.getAttribute("caption") || imgEl.alt}"
+        target="_blank">
+        ${imgEl.outerHTML}
+      </a>`;
+    });
+
+    // Initialize PhotoSwipe 5
+    var lightbox = new PhotoSwipeLightbox(options);
+
+    lightbox.init();
+  }
+
+  window.addEventListener("load", initPhotoSwipe);
+</script>
+
+<meta name="google-site-verification" content="d_7fHqoWfEPFWDaXJ19fg2f5xy6BPZbrY4fbsJjIUSI">
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="site-header " role="banner">
+
+  <div class="wrapper">
+    <div class="site-header-inner">
+<span class="site-brand"><a class="site-brand-inner" rel="author" href="/">
+  <img class="site-favicon" title="IMU TECH BLOG" src="" onerror="this.style.display='none'">
+  IMU TECH BLOG
+</a>
+</span><nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger">
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewbox="0 0 18 15" width="18px" height="15px">
+                <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"></path>
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger">
+<a class="page-link" href="/about.html">ABOUT</a><a class="page-link" href="/archives.html">ARCHIVES</a><a class="page-link" href="/categories.html">CATEGORIES</a><a class="page-link" href="/">HOME</a><a class="page-link" href="/tags.html">TAGS</a>
+
+
+
+
+
+
+
+
+
+<div class="page-link" style="display: inline;">
+
+
+
+<div id="google_translate_element" style="display: none;">
+</div>
+
+<div class="ct-language">
+  <ul class="list-unstyled ct-language-dropdown">
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="en">
+          
+          <img src="https://cdn.countryflags.com/thumbs/united-states-of-america/flag-400.png" title="English">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="fr">
+          
+          <img src="https://cdn.countryflags.com/thumbs/france/flag-400.png" title="French">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="zh-CN">
+          
+          <img src="https://cdn.countryflags.com/thumbs/china/flag-400.png" title="Chinese(Simple)">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ja">
+          
+          <img src="https://cdn.countryflags.com/thumbs/japan/flag-400.png" title="Japanese">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ko">
+          
+          <img src="https://cdn.countryflags.com/thumbs/south-korea/flag-400.png" title="Korean">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ru">
+          
+          <img src="https://cdn.countryflags.com/thumbs/russia/flag-400.png" title="Russian">
+          
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    autoDisplay: false,
+    layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+  }, 'google_translate_element');
+
+  // Links to cross-origin destinations are unsafe
+  var gll = document.getElementsByClassName('goog-logo-link')[0];
+  if (gll) {
+    gll.setAttribute('rel', 'noopener');
+  }
+
+  function restoreLang() {
+    var iframe = document.getElementsByClassName('goog-te-banner-frame')[0];
+    if (!iframe) return;
+
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    var restore_el = innerDoc.getElementsByTagName("button");
+
+    for (var i = 0; i < restore_el.length; i++) {
+      if (restore_el[i].id.indexOf("restore") >= 0) {
+        restore_el[i].click();
+        var close_el = innerDoc.getElementsByClassName("goog-close-link");
+        close_el[0].click();
+        return;
+      }
+    }
+  }
+
+  function triggerHtmlEvent(element, eventName) {
+    var event;
+    if (document.createEvent) {
+      event = document.createEvent('HTMLEvents');
+      event.initEvent(eventName, true, true);
+      element.dispatchEvent(event);
+    } else {
+      event = document.createEventObject();
+      event.eventType = eventName;
+      element.fireEvent('on' + event.eventType, event);
+    }
+  }
+
+  var googleCombo = document.querySelector("select.goog-te-combo");
+  var langSelect = document.querySelector('.ct-language');
+  langSelect.addEventListener('click', function(event) {
+    if (!event.target) {
+      return;
+    }
+
+    var selected = document.querySelector('.ct-language .ct-language-selected');
+    if (selected) {
+      selected.classList.remove('ct-language-selected');
+    }
+
+    var target = event.target;
+    while (target && target !== langSelect ) {
+      if (target.matches('.lang-select')) {
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (target && target.matches('.lang-select')) {
+      var lang = target.getAttribute('data-lang');
+      if (googleCombo.value == lang) {
+        restoreLang();
+      } else {
+        target.parentElement.classList.add('ct-language-selected');
+        googleCombo.value = lang;
+        triggerHtmlEvent(googleCombo, 'change');
+      }
+    }
+
+    event.preventDefault();
+  });
+}
+</script>
+
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+</div>
+</div>
+        </nav>
+</div>
+  </div>
+</header>
+
+<script>
+  function initHeader() {
+    var lastScrollY = getScrollPos().y;
+    var documentElement = document.documentElement;
+
+    function storeScrollData() {
+      var y = getScrollPos().y;var scrollStatus = "";
+
+      if (y <= 0) {
+        scrollStatus = "top";
+      } else if ((window.innerHeight + y) >= document.body.offsetHeight) {
+        scrollStatus = "bottom";
+      } else {
+        var isScrollDown = (y - lastScrollY > 0) ? true : false;
+        scrollStatus = isScrollDown ? "down" : "up";
+      }
+
+      lastScrollY = y;
+      documentElement.setAttribute("data-scroll-status", scrollStatus);
+    }
+
+    window.addEventListener('scroll', function(e) {
+      storeScrollData();
+    });
+
+    storeScrollData();
+  }
+  document.addEventListener('DOMContentLoaded', initHeader);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  function hashLocate(hashValue) {
+    hashValue = hashValue.replace(/^.*#h-/, '');
+    hashValue = decodeURIComponent(hashValue);
+    var element = document.getElementById(hashValue);
+
+    if (!element) {
+      return;
+    }
+
+    var header = document.querySelector('header.site-header');
+    var headerRect = header.getBoundingClientRect();
+    var headerTop = Math.floor(headerRect.top);
+    var headerHeight = Math.floor(headerRect.height);
+    var scrollPos = getScrollPos();
+    var offsetY = element.offsetTop - (headerTop + headerHeight + 20);
+
+    if (offsetY == scrollPos.y) {
+      return;
+    }
+
+    if (headerTop == 0  && offsetY > scrollPos.y) {
+      offsetY += headerHeight + 2;
+    } else if (headerTop < 0  && offsetY < scrollPos.y) {
+      offsetY -= headerHeight - 2;
+    }
+
+    smoothScrollTo(offsetY);
+  }
+
+  // The first event occurred
+  window.addEventListener('load', function(event) {
+    if (window.location.hash) {
+      hashLocate(window.location.hash);
+    }
+  });
+
+  // The first event occurred
+  window.addEventListener('click', function(event) {
+    if (event.target.tagName.toLowerCase() == 'a') {
+      hashLocate(event.target.getAttribute('href'));
+    }
+  });
+</script>
+<div class="theme-toggle">
+  <input type="checkbox" id="theme-switch">
+  <label for="theme-switch">
+    <div class="toggle"></div>
+    <div class="names">
+      <p class="light">Light</p>
+      <p class="dark">Dark</p>
+    </div>
+  </label>
+</div>
+
+
+
+
+<script>
+  (function() {
+    var sw = document.getElementById('theme-switch');
+    var html = document.getElementsByTagName('html')[0];
+    var nightModeOption = ('manual' || 'auto').toLowerCase();
+    var storage = nightModeOption === 'manual'
+        ? localStorage
+        : sessionStorage;
+    var themeData = loadThemeData();
+
+    function saveThemeData(data) {
+      storage.setItem('theme', JSON.stringify(data));
+    }
+
+    function loadThemeData() {
+      var data = storage.getItem('theme');
+      try {
+        data = JSON.parse(data ? data : '');
+      } catch(e) {
+        data = { nightShift: undefined, autoToggleAt: 0 };
+        saveThemeData(data);
+      }
+      return data;
+    }
+
+    function handleThemeToggle(nightShift) {
+      themeData.nightShift = nightShift;
+      saveThemeData(themeData);
+      html.dataset.theme = nightShift ? 'dark' : 'light';
+      setTimeout(function() {
+        sw.checked = nightShift ? true : false;
+        document.dispatchEvent(new Event('theme-changed'));
+      }, 50);
+    }
+
+    function autoThemeToggle() {
+      // Next time point of theme toggle
+      var now = new Date();
+      var toggleAt = new Date();
+      var hours = now.getHours();
+      var nightShift = hours >= 19 || hours <=7;
+
+      if (nightShift) {
+        if (hours > 7) {
+          toggleAt.setDate(toggleAt.getDate() + 1);
+        }
+        toggleAt.setHours(7);
+      } else {
+        toggleAt.setHours(19);
+      }
+
+      toggleAt.setMinutes(0);
+      toggleAt.setSeconds(0);
+      toggleAt.setMilliseconds(0)
+
+      var delay = toggleAt.getTime() - now.getTime();
+
+      // auto toggle theme mode
+      setTimeout(function() {
+        handleThemeToggle(!nightShift);
+      }, delay);
+
+      return {
+        nightShift: nightShift,
+        toggleAt: toggleAt.getTime()
+      };
+    }
+
+    // Listen the theme toggle event
+    sw.addEventListener('change', function(event) {
+      handleThemeToggle(event.target.checked);
+    });
+
+    if (nightModeOption == 'auto') {
+      var data = autoThemeToggle();
+
+      // Toggle theme by local setting
+      if (data.toggleAt > themeData.autoToggleAt) {
+        themeData.autoToggleAt = data.toggleAt;
+        handleThemeToggle(data.nightShift);
+      } else {
+        handleThemeToggle(themeData.nightShift);
+      }
+    } else if (nightModeOption == 'manual') {
+      handleThemeToggle(themeData.nightShift);
+    } else {
+      var nightShift = themeData.nightShift;
+      if (nightShift === undefined) {
+        nightShift = nightModeOption === 'on';
+      }
+      handleThemeToggle(nightShift);
+    }
+  })();
+</script>
+<div id="click-to-top" class="click-to-top">
+  <i class="fa fa-arrow-up"></i>
+</div>
+<script>
+  (function () {
+    const clickToTop = document.getElementById('click-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        clickToTop.classList.add('show')
+      }else {
+        clickToTop.classList.remove('show')
+      }
+    });
+    clickToTop.addEventListener('click', () => {
+      window.smoothScrollTo(0);
+    });
+  })();
+</script>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="framework">
+  <section class="main">
+
+     <div class="post">
+  <section>
+
+
+
+
+
+
+
+
+
+<header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">Kafka Consumer</h1>
+  <h2 class="post-subtitle"></h2>
+
+  <div class="post-meta">
+    <time class="dt-published" datetime="2024-08-06T00:00:00+00:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Aug 06, 2024
+    </time><span class="post-author left-vsplit"><i class="fa fa-pencil"></i> Hyunjune</span>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 13 mins</span>
+  </div>
+<div class="post-tags">
+<a class="post-tag" href="/tags.html#consumer">#consumer</a><a class="post-tag" href="/tags.html#rebalancing">#rebalancing</a><a class="post-tag" href="/tags.html#group%20coordinator">#group coordinator</a><a class="post-tag" href="/tags.html#heartbeat">#heartbeat</a>
+</div></header>
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <div class="post-content e-content" itemprop="articleBody">
+
+      
+<h3 id="consumer-개요">Consumer 개요</h3>
+<ul>
+  <li>브로커의 topic 메시지 읽는 역할 수행</li>
+  <li>모든 consumer 들은 고유한 group id를 가지는 consumer group에 속해야 함</li>
+  <li>Fetcher, ConsumerClientNetwork 등의 주요 내부 객체와 별도의 HeartBeat Thread를 생성</li>
+</ul>
+
+<p><img src="https://imucoding.github.io/assets/images/consumer.png" alt="img.png"></p>
+
+<ul>
+  <li>partition은 consumer group에서 단 하나의 consumer에만 할당됨</li>
+  <li>동일 consumer group 내 consumer들은 작업량을 최대한 균등하게 분배</li>
+  <li>서로 다른 consumer group의 consumer들은 분리되어 독립적으로 동작</li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kafka-console-consumer --bootstrap-server localhost:9092 --group 그룹명 --topic 토픽명
+--property pring.key=true --property print.partition=true
+</code></pre></div></div>
+
+<h4 id="simple-consumer">Simple Consumer</h4>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">String</span> <span class="n">topic</span> <span class="o">=</span> <span class="s">"simple-topic"</span><span class="o">;</span>
+<span class="nc">Properties</span> <span class="n">props</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Properties</span><span class="o">();</span>
+<span class="n">props</span><span class="o">.</span><span class="na">setProperty</span><span class="o">(</span><span class="nc">ConsumerConfig</span><span class="o">.</span><span class="na">BOOTSTRAP_SERVERS_CONFIG</span><span class="o">,</span> <span class="s">"192.168.56.101:9092"</span><span class="o">);</span>
+<span class="n">props</span><span class="o">.</span><span class="na">setProperty</span><span class="o">(</span><span class="nc">ConsumerConfig</span><span class="o">.</span><span class="na">KEY_DESERIALIZER_CLASS_CONFIG</span><span class="o">,</span> <span class="nc">StringDeserializer</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getName</span><span class="o">());</span>
+<span class="n">props</span><span class="o">.</span><span class="na">setProperty</span><span class="o">(</span><span class="nc">ConsumerConfig</span><span class="o">.</span><span class="na">VALUE_DESERIALIZER_CLASS_CONFIG</span><span class="o">,</span> <span class="nc">StringDeserializer</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getName</span><span class="o">());</span>
+<span class="n">props</span><span class="o">.</span><span class="na">setProperty</span><span class="o">(</span><span class="nc">ConsumerConfig</span><span class="o">.</span><span class="na">GROUP_ID_CONFIG</span><span class="o">,</span> <span class="s">"group-01"</span><span class="o">);</span>
+
+<span class="nc">KafkaConsumer</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">kafkaConsumer</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">KafkaConsumer</span><span class="o">&lt;&gt;(</span><span class="n">props</span><span class="o">);</span>
+<span class="n">kafkaConsumer</span><span class="o">.</span><span class="na">subscribe</span><span class="o">(</span><span class="nc">List</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">topic</span><span class="o">));</span>
+<span class="k">while</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+<span class="o">{</span>
+ <span class="nc">ConsumerRecords</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">consumerRecords</span> <span class="o">=</span> <span class="n">kafkaConsumer</span><span class="o">.</span><span class="na">poll</span><span class="o">(</span><span class="nc">Duration</span><span class="o">.</span><span class="na">ofMillis</span><span class="o">(</span><span class="mi">1000</span><span class="o">));</span>
+ <span class="k">for</span><span class="o">(</span><span class="nc">ConsumerRecord</span> <span class="kd">record</span> <span class="err">:</span> <span class="nc">consumerRecords</span><span class="o">)</span>
+ <span class="o">{</span>
+     <span class="n">logger</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"key : {} value : {} partitions : {}"</span><span class="o">.</span> <span class="kd">record</span><span class="err">.</span><span class="nc">key</span><span class="o">(),</span> <span class="kd">record</span><span class="err">.</span><span class="nc">value</span><span class="o">(),</span> <span class="kd">record</span><span class="err">.</span><span class="nc">partition</span><span class="o">());</span>
+ <span class="o">}</span>
+<span class="o">}</span>
+<span class="n">kafkaConsumer</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+</code></pre></div></div>
+<ul>
+  <li>subscribe에 topic은 collection 또는 pattern으로 지정 가능</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">kafkaConsumer.poll(Duration.ofMillis(1000))</code>
+    <ul>
+      <li>가져올 데이터가 하나도 없는 경우 1000ms 만큼 기다린 후 return</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="custom-데이터-읽기">Custom 데이터 읽기</h4>
+
+<p>Deserializer 구현</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">OrderDeserialzer</span> <span class="kd">implements</span> <span class="nc">Deserializer</span><span class="o">&lt;</span><span class="nc">Order</span><span class="o">&gt;</span> <span class="o">{</span>
+    <span class="nc">ObjectMapper</span> <span class="n">objectMapper</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ObjectMapper</span><span class="o">().</span><span class="na">registerModule</span><span class="o">(</span><span class="k">new</span> <span class="nc">JavaTimeModule</span><span class="o">());</span>
+
+    <span class="nd">@override</span>
+    <span class="kd">public</span> <span class="nc">Order</span> <span class="nf">deserializer</span><span class="o">(</span><span class="nc">String</span> <span class="n">topic</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">data</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">Order</span> <span class="n">order</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="k">try</span> <span class="o">{</span>
+          <span class="n">order</span> <span class="o">=</span> <span class="n">objectMapper</span><span class="o">.</span><span class="na">readValue</span><span class="o">(</span><span class="n">data</span><span class="o">,</span> <span class="nc">Order</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+          <span class="o">...</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">order</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+<p>OrderSerdeConsumer</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">props</span><span class="o">.</span><span class="na">setProperty</span><span class="o">(</span><span class="nc">ConsumerConfig</span><span class="o">.</span><span class="na">KEY_DESERIALIZER_CLASS_CONFIG</span><span class="o">,</span> <span class="nc">StringDeserializer</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getName</span><span class="o">());</span>
+<span class="n">props</span><span class="o">.</span><span class="na">setProperty</span><span class="o">(</span><span class="nc">ConsumerConfig</span><span class="o">.</span><span class="na">VALUE_DESERIALIZER_CLASS_CONFIG</span><span class="o">,</span> <span class="nc">OrderDeserializer</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getName</span><span class="o">());</span>
+
+<span class="nc">KafkaConsumer</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">Order</span><span class="o">&gt;</span> <span class="n">kafkaConsumer</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">KafkaConsumer</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">Order</span><span class="o">&gt;(</span><span class="n">props</span><span class="o">);</span>
+<span class="nc">ConsumerRecords</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span><span class="nc">Order</span><span class="o">&gt;</span> <span class="n">records</span> <span class="o">=</span> <span class="n">kafkaConsumer</span><span class="o">.</span><span class="na">poll</span><span class="o">(</span><span class="nc">Duration</span><span class="o">.</span><span class="na">ofMilis</span><span class="o">(</span><span class="mi">1000</span><span class="o">));</span>
+</code></pre></div></div>
+
+<p><br></p>
+
+<p><img src="https://imucoding.github.io/assets/images/fetcher.png" alt="img.png"></p>
+<ul>
+  <li>Fetcher는 Linked Queue에 데이터가 없는 경우 ConsumerClient Network에 데이터를 가져올 것을 요청</li>
+  <li>Linked Queue에 데이터가 있는 경우 Fetcher는 데이터 가져오고 poll() 수행 완료</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="consumer-fetcher-관련-주요-설정-파라미터">Consumer Fetcher 관련 주요 설정 파라미터</h3>
+
+<ul>
+  <li>fetch.min.bytes
+    <ul>
+      <li>fetcher가 record를 읽어들이는 최소 bytes (default = 1)</li>
+      <li>fetcher가 ConsumerClient Network를 통해 record를 읽어오도록 했을 때 지정한 bytes만큼 쌓이지 않으면 broker는 전송하지 않음</li>
+    </ul>
+  </li>
+  <li>fetch.max.wait.ms
+    <ul>
+      <li>브로커에 fetch.min.bytes 이상의 메시지가 쌓일 때까지 최대 대기 시간 (default = 500ms)</li>
+      <li>이 시간까지 쌓이지 않으면 그냥 가져감</li>
+    </ul>
+  </li>
+  <li>fetch.max.bytes
+    <ul>
+      <li>fetcher가 브로커에서 한 번에 가져올 수 있는 최대 데이터 bytes (default 50MB)</li>
+    </ul>
+  </li>
+  <li>max.partition.fetch.bytes
+    <ul>
+      <li>fetcher가 브로커에서 파티션 별 한 번에 가져올 수 있는 bytes</li>
+    </ul>
+  </li>
+  <li>max.poll.records
+    <ul>
+      <li>fetcher가 브로커에서 한 번에 가져올 수 있는 레코드 수 (default 500)</li>
+      <li>fetch.max.bytes 초과하지 않는 범위내에서 레코드 수 제한함</li>
+    </ul>
+  </li>
+</ul>
+
+<p>만약 가져올 데이터가 많은 경우 max.partition.fetch.byte 크기를 조절해야 하고, 적다면 fetch.min.bytes 크기를 조절해야 함</p>
+<ul>
+  <li>가장 최신의 offset 데이터를 가져오고 있다면 fetch.min.bytes 만큼 가져오고 있거나 데이터가 min만큼 차지 않아서 fetch.min.bytes만큼 기다렸다가 return 한 경우일 수 있음</li>
+  <li>오랜 과거 offset 데이터를 가져온 다면 최대 max.partition.fetch.bytes만큼 파티션에서 읽은 뒤 반환</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="consumer의-autooffsetreset">Consumer의 auto.offset.reset</h3>
+
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">__consumer_offsets</code>에 consumer group이 offset 정보를 가지고 있지 않을 시 consumer가 접속 시 파티션의 처음 offset부터 가져올 것인지, 마지막 offset 이후부터 가져올 것인지를 설정
+    <ul>
+      <li>만약 가지고 있으면 기록된 offset을 읽음</li>
+    </ul>
+  </li>
+  <li>offsets.retention.minutes
+    <ul>
+      <li>__consumer_offsets에 유지되는 offset 기간 (default 7일)</li>
+      <li>consumer가 종료되어도 offset은 유지됨</li>
+    </ul>
+  </li>
+  <li>해당 topic이 삭제되고 재생성되는 경우는 topic에 대한 consumer group의 offset 정보는 0으로 기록됨</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="group-coordinator와-consumer-group">Group Coordinator와 Consumer Group</h3>
+<ul>
+  <li>consumer group 내 새로운 consumer가 추가되거나 기존 consumer가 종료될 때, 또는 topic에 새로운 partition이 추가될 때 broker의 group coordinator는 consumer group내의 consumer 들에게 파티션을 재할당하는 rebalancing 수행 지시</li>
+  <li>consumer group은 group coordinator를 통해 __consumer_offsets 토픽에 그룹 내 consumer들의 offset을 기록하는데, __consumer_offsets에는 50개의 파티션이 존재, consumer group 별 작성할 파티션의 리더인 브로커가 group coordinator가 됨</li>
+</ul>
+
+<p><img src="https://imucoding.github.io/assets/images/groupcoordinator.png" alt="img.png"></p>
+
+<h4 id="group-coordinator">Group Coordinator</h4>
+<ul>
+  <li>consumer들의 join group 정보</li>
+  <li>partition 매핑 정보</li>
+  <li>consumer의 heartbeat 관리</li>
+</ul>
+
+<p>1) consumer group 내 consumer가 broker에 최초 접속 요청 시 group coordinator가 생성 <br>
+2) 동일 group.id로 여러 개의 consumer가 broker의 group coordinator로 접속 <br>
+3) 가장 빨리 group에 join 요청 한 consumer에게 leader consumer로 지정 <br> 
+4) leader는 파티션 할당 전략에 따라 consumer들에게 파티션 할당 <br>
+5) leader는 최종 할당 된 파티션 정보를 group coordinator에게 전달 <br>
+6) 정보 전달 성공을 공유한 뒤 개별 consumer들은 할당된 파티션에서 메시지 읽음 <br></p>
+
+<h4 id="consumer-group-status">Consumer Group Status</h4>
+<p><img src="https://imucoding.github.io/assets/images/rebalance.png" alt="img.png"></p>
+
+<p><br></p>
+<hr>
+
+<h3 id="consumer-스태틱-그룹-멤버쉽">Consumer 스태틱 그룹 멤버쉽</h3>
+
+<ul>
+  <li>많은 consumer를 가지는 consumer group에서 rebalance가 발생하면 모든 consumer들이 rebalance를 수행하므로 많은 시간이 소모되고 대량 데이터 처리 시 Lag가 길어질 수 있음</li>
+  <li>
+    <p>유지 보수 차원의 consuemr restart도 rebalance를 초래하므로 불필요한 rebalance를 발생시키지 않는 법 필요</p>
+  </li>
+  <li>consumer group 내의 consumer 들에게  고정된 id 부여</li>
+  <li>consumer 별로 consumer group 최초 조인 시 할당된 파티션을 그대로 유지하고 consumer가 shutdown되어도 <code class="language-plaintext highlighter-rouge">session.timeout.ms</code> 내에 재기동되면 rebalance 수행되지 않고 기존 파티션이 재할당 됨</li>
+  <li>스태틱 그룹 멤버십을 적용할 경우 session.timeout.ms를 좀 더 큰 값으로 설정</li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">props</span><span class="o">.</span><span class="na">setProrperty</span><span class="o">(</span><span class="nc">ConsumerConfig</span><span class="o">.</span><span class="na">GROUP_INSTANCE_ID_CONFIG</span><span class="o">,</span> <span class="s">"group-02"</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p><br></p>
+<hr>
+
+<h3 id="heartbeat와-poll-관련-주요-파라미터">Heartbeat와 poll() 관련 주요 파라미터</h3>
+
+<ul>
+  <li>heartbeat.interval.ms (default = 3000)
+    <ul>
+      <li>heartbeat thread가 heartbeat를 보내는 간격</li>
+      <li>session.timeout.ms 보다 작게 설정되어야 함</li>
+      <li>session.timeout.ms의 1/3 보다 낮게 설정 권장</li>
+    </ul>
+  </li>
+  <li>session.timeout.ms
+    <ul>
+      <li>broker(group coordinator)가 consumer에서 오는 heartbeat를 기다리는 최대 시간</li>
+      <li>이 시간 내에 heartbeat를 받지 못할 시 rebalancing 명령</li>
+    </ul>
+  </li>
+  <li>max.poll.interval.ms
+    <ul>
+      <li>heartbeat는 정상적으로 보내도 실제 polling을 제대로 수행하지 못하는 기능 장애 방지</li>
+      <li>이전 poll()을 호출 후 다음 poll()까지 broker가 기다리는 시간</li>
+      <li>해당 시간 내에 poll() 요청이 오지 않으면 rebalancing 명령</li>
+    </ul>
+  </li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="wakeup를-이용하여-consumer-효과적으로-종료">Wakeup를 이용하여 Consumer 효과적으로 종료</h3>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Thread</span> <span class="n">mainThread</span> <span class="o">=</span> <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">()</span>
+<span class="nc">Runtime</span><span class="o">.</span><span class="na">getRuntime</span><span class="o">().</span><span class="na">addShutdown</span><span class="o">(</span><span class="k">new</span> <span class="nc">Thread</span><span class="o">(){</span>
+   <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span>
+   <span class="o">{</span>
+     <span class="n">kafkaConsumer</span><span class="o">.</span><span class="na">wakeup</span><span class="o">();</span>
+     <span class="k">try</span><span class="o">{</span>
+        <span class="n">mainThread</span><span class="o">.</span><span class="na">join</span><span class="o">();</span>
+     <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="nc">InterruptedException</span> <span class="n">e</span><span class="o">)</span>
+     <span class="o">{</span>
+         <span class="o">...</span> 
+     <span class="o">}</span> 
+   <span class="o">}</span>
+<span class="o">});</span>
+
+<span class="k">try</span><span class="o">{</span>
+   <span class="k">while</span><span class="o">(</span><span class="kc">true</span><span class="o">){</span>
+     <span class="n">consumerRecord</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">consumerRecords</span> <span class="o">=</span> <span class="n">kafkaConsumer</span><span class="o">.</span><span class="na">poll</span><span class="o">(</span><span class="nc">Duration</span><span class="o">.</span><span class="na">ofMilis</span><span class="o">(</span><span class="mi">1000</span><span class="o">))</span> 
+     <span class="k">for</span><span class="o">(</span><span class="n">consumerRecords</span> <span class="kd">record</span> <span class="err">:</span> <span class="nc">consumerRecords</span><span class="o">)</span>
+     <span class="o">{</span>
+        <span class="n">log</span><span class="o">(...)</span>    
+     <span class="o">}</span>
+   <span class="o">}</span>
+<span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="nc">WakeupException</span> <span class="n">e</span><span class="o">)</span>
+<span class="o">{</span> 
+    <span class="c1">// ignore      </span>
+<span class="o">}</span><span class="k">finally</span>
+<span class="o">{</span>
+    <span class="n">kafkaConsumer</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>      
+<span class="o">}</span>
+
+
+</code></pre></div></div>
+<ul>
+  <li>while 무한 루프를 중지하기 위해 interrupt signal을 통헤 강제 종료를 시켜야하는데, 그렇게 되면 group coordinator에서 session.timeout까지 consumer의 상태를 알 수 없음</li>
+  <li>shutdown 이벤트 등록해서 mainThread 종료 시 wakeup 호출하도록 명령하고, WakeupException을 발생시켜 무한 루프 탈출</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="consumer-rebalancing-protocol">Consumer Rebalancing Protocol</h3>
+
+<h4 id="eager-모드">Eager 모드</h4>
+<ul>
+  <li>rebalancing 수행 시 기존 consumer의 모든 파티션 할당 취소하고 잠시 메시지를 읽지 않음</li>
+  <li>이후 새롭게 consumer에 파티션을 할당받고 다시 메시지를 읽음</li>
+  <li>lag가 상대적으로 크게 발생</li>
+  <li>파티션 할당 전략(<code class="language-plaintext highlighter-rouge">partition.assignment.strategy</code>) 중 Range, Round Robin, Sticky 방식이 여기에 해당</li>
+</ul>
+
+<h4 id="cooperative-모드">Cooperative 모드</h4>
+<ul>
+  <li>rebalance 수행 시 기존 consumer들의 모든 파티션 할당을 취소하지 않고 대상이 되는 consumer들에 대해서 파티션에 따라 점진적으로(Incremental) consumer를 할당해가며 수행</li>
+  <li>전체 consumer가 메시지 읽기를 중지 하지 않으며 개별 consumer가 협력적으로 영향을 받는 파티션만 Rebalancing</li>
+  <li>많은 consumer를 가지는 consumer group에서 활용도 높음</li>
+  <li>파티션 할당 전략 중 Cooperative Sticky에 해당</li>
+</ul>
+
+<h4 id="consumer-파티션-할당-전략-유형">Consumer 파티션 할당 전략 유형</h4>
+<ul>
+  <li>Range 할당 전략
+    <ul>
+      <li>서로 다른 2개 이상의 토픽을 consumer들이 subscribe할 시 토픽 별 동일한 파티션을 특정 consumer에 할당하는 전략</li>
+      <li>여러 토픽들에서동일한 키 값으로 되어 있는 파티션을 특정 consumer에 할당하여 해당 consumer가 여러 토픽의 동일 키 값으로 데이터 처리를 용이하게 할 수 있도록 지원</li>
+    </ul>
+  </li>
+  <li>Round Robin 할당 전략
+    <ul>
+      <li>파티션별로 consumer들이 균등하게 부하를 분배할 수 있도록 순차적 할당</li>
+    </ul>
+  </li>
+  <li>Sticky 할당 전략
+    <ul>
+      <li>최근 할당된 파티션과 consumer 매핑을 rebalance 수행되어도 가급적 그대로 유지</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="round-robin과-range-비교">Round Robin과 Range 비교</h4>
+<p><img src="https://imucoding.github.io/assets/images/rrrange.png" alt="img.png"></p>
+
+<h4 id="round-robin의-rebalancing-후-파티션-매핑">Round Robin의 Rebalancing 후 파티션 매핑</h4>
+<p><img src="https://imucoding.github.io/assets/images/rrrebalance.png" alt="img.png"></p>
+<ul>
+  <li>rebalancing 후 이전의 파티션과 컨슈머의 매핑이 변경 되기 쉬움</li>
+</ul>
+
+<h4 id="sticky의-rebalancing-후-파티션-매핑">Sticky의 Rebalancing 후 파티션 매핑</h4>
+<p><img src="https://imucoding.github.io/assets/images/stickyrebalance.png" alt="img.png"></p>
+<ul>
+  <li>각 토픽의 partition 1,2는 유지 후 3만 나눠서 매핑</li>
+  <li>sticky도 eager이므로 모두 해제 후 다시 할당함</li>
+</ul>
+
+<h4 id="cooperative-sticky의-rebalancing">Cooperative Sticky의 Rebalancing</h4>
+<p><img src="https://imucoding.github.io/assets/images/cooperative.png" alt="img.png"></p>
+<ul>
+  <li>모든 매핑을 취소하지 않고 기존 매핑을 유지</li>
+  <li>partition 3만 순차적으로 재할당</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="offset-commit의-이해">Offset Commit의 이해</h3>
+<p><img src="https://imucoding.github.io/assets/images/offset.png" alt="img.png"></p>
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">__consumer_offsets</code> 에는 consumer group이 특정 topic의 partition 별로 읽기 commit 한 offset의 정보를 가짐</li>
+  <li>어느 consumer가 commit 했는 지에 대한 정보는 가지지 않음</li>
+  <li>offset 정보는 다음에 읽을 offset임</li>
+</ul>
+
+<h4 id="중복-읽기-상황">중복 읽기 상황</h4>
+<ul>
+  <li>poll()을 통해 읽어들였으나 commit을 하지 못하고 consumer가 죽는 경우 rebalancing을 통해 해당 파티션을 할당 받은 다른 consumer에서는 중복 읽기 발생</li>
+</ul>
+
+<h4 id="읽기-누락-상황">읽기 누락 상황</h4>
+<ul>
+  <li>poll() 수행 후 바로 commit, 가져온 데이터를 처리하는 중 consumer가 죽는 경우 이후 consumer에서는 commit 이후 데이터만 가져오므로 누락됨</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="consumer-offset-적용-유형">Consumer Offset 적용 유형</h3>
+<ul>
+  <li>Auto Commit : 사용자가 코드로 commit을 기술하지 않아도 consumer가 자동으로 지정된 기간마다 commit 수행</li>
+  <li>Manual Commit : 사용자가 명시적으로 commit을 기술, sync와 async가 있음</li>
+</ul>
+
+<h4 id="consumer의-auto-commit">Consumer의 Auto Commit</h4>
+<ul>
+  <li>‘auto.enable.commit= true’ 인 경우 메시지를 브로커에 바로 commit 하지 않고 ‘auto.commit.interval.ms’에 정해진 주기(default 5초)마다 consumer가 자동으로 commit을 수행</li>
+  <li>바로 commit 하지 않으므로 consumer가 죽으면 broker의 commit이 실제 consumer가 읽어온 메시지보다 오래되었으므로, 장애/재가동 및 rebalancing 후 브로커에서 이미 읽어온 메시지를 다시 읽어오는 중복 처리 가능성 있음</li>
+  <li>auto.commit.interval.ms에 지정한 시간이 흐른 뒤 수행되는 poll()에서 이전 poll()에서 가져온 메시지에 대한 offset을 commit
+    <ul>
+      <li>즉 interval마다 commit하는 것은 이전 poll에 대한 offset</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="consumer의-manual-동기비동기-commit">Consumer의 Manual 동기/비동기 Commit</h4>
+<ul>
+  <li>Sync 방식
+    <ul>
+      <li>consumer 객체의 <code class="language-plaintext highlighter-rouge">commitSync()</code> 사용</li>
+      <li>메시지 배치를 poll()을 통해서 읽어오고 마지막 offset을 브로커에 commit 적용
+        <ul>
+          <li>commit 시점을 사용자가 지정</li>
+        </ul>
+      </li>
+      <li>broker에 commit 적용이 성공적으로 될 때 까지 blocking 적용</li>
+      <li>broker에 commit 적용 실패할 경우 다시 commit 적용 요청</li>
+      <li>비동기 대비 느림</li>
+    </ul>
+  </li>
+  <li>Async 방식
+    <ul>
+      <li>consumer 객체의 commitAsync() 메소드를 사용</li>
+      <li>broker에 commit 적용이 성공하길 기다리지 않고 계속 메시지 읽어옴</li>
+      <li>broker에 commit 적용이 실패해도 다시 commit 시도 안함</li>
+      <li>따라서 consumer 장애 혹은 rebalance 시 한 번 읽은 메시지를 다시 중복해서 가져올 수 있음</li>
+      <li>동기 대비 빠름</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="c1">// auto commit 비활성화</span>
+<span class="c1">// props.setProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "6000");</span>
+<span class="n">props</span><span class="o">.</span><span class="na">setProperty</span><span class="o">(</span><span class="nc">ConsumerConfig</span><span class="o">.</span><span class="na">ENABLE_AUTO_COMMIT</span><span class="o">,</span> <span class="s">"false"</span><span class="o">);</span>
+<span class="n">props</span><span class="o">.</span><span class="na">setProperty</span><span class="o">(</span><span class="nc">ConsumerConfig</span><span class="o">.</span><span class="na">PARTITION_ASSIGNMENT_STRATEGY_CONFI</span><span class="o">,</span> <span class="nc">CooperativeStickyAssignor</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getName</span><span class="o">());</span>
+
+    <span class="o">...</span>
+
+<span class="c1">// commitAsync</span>
+<span class="nc">ConsumerRecords</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">String</span><span class="o">&gt;</span> <span class="n">consumerRecords</span> <span class="o">=</span> <span class="n">kafkaConsumer</span><span class="o">.</span><span class="na">poll</span><span class="o">(</span><span class="nc">Duration</span><span class="o">.</span><span class="na">ofMillis</span><span class="o">(</span><span class="mi">1000</span><span class="o">));</span>
+<span class="n">kafkaConsumer</span><span class="o">.</span><span class="na">commitAsync</span><span class="o">(</span><span class="k">new</span> <span class="nc">OffsetConsumerCallback</span><span class="o">(){</span>
+    <span class="nd">@override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onComplete</span><span class="o">(...){}</span>
+<span class="o">});</span>
+
+<span class="c1">// commitSync</span>
+
+<span class="nc">ConsumerRecords</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">String</span><span class="o">&gt;</span> <span class="n">consumerRecords</span> <span class="o">=</span> <span class="n">kafkaConsumer</span><span class="o">.</span><span class="na">poll</span><span class="o">(</span><span class="nc">Duration</span><span class="o">.</span><span class="na">ofMillis</span><span class="o">(</span><span class="mi">1000</span><span class="o">));</span>
+<span class="k">if</span><span class="o">(</span><span class="n">consummerRecords</span><span class="o">.</span><span class="na">count</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span>
+    <span class="n">kafkaConsumer</span><span class="o">.</span><span class="na">commitSync</span><span class="o">();</span>
+
+</code></pre></div></div>
+<ul>
+  <li>auto commit은 property에서 <code class="language-plaintext highlighter-rouge">ENABLE_AUTO_COMMIT_CONFIG</code>를 true로 설정하고 commitSync(), commitAsync()를 호출하지 않을 시 수행 됨</li>
+</ul>
+
+<p><br></p>
+<hr>
+
+<h3 id="consumer에서-topic의-특정-파티션만-할당하기">Consumer에서 Topic의 특정 파티션만 할당하기</h3>
+<ul>
+  <li>consumer에게 여러 개의 파티션이 있는 topic에서 특정 파티션만 할당 가능</li>
+  <li>배치 처리 시 특정 key 레벨의 파티션을 특정 consumer에 할당하여 처리할 경우 적용</li>
+  <li>kafkaConsumer의 assign() 메소드에 TopicPartition 객체로 특정 파티션을 인자로 입력하여 할당</li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">TopicPartition</span> <span class="n">tp</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">TopicPartition</span><span class="o">(</span><span class="n">topicName</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+<span class="n">kafkaConsumer</span><span class="o">.</span><span class="na">assign</span><span class="o">(</span><span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="n">tp</span><span class="o">));</span>
+</code></pre></div></div>
+<ul>
+  <li>0번 파티션을 할당</li>
+  <li>할당 되는 파티션은 무조건 leader</li>
+</ul>
+
+<p><br></p>
+
+<h4 id="topic-특정-파티션의-특정-offset부터-읽기">Topic 특정 파티션의 특정 offset부터 읽기</h4>
+<ul>
+  <li>특정 메시지가 누락되었을 경우 해당 메시지를 다시 읽어오기 위해 유지보수 차원에서 사용</li>
+</ul>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">TopicPartition</span> <span class="n">tp</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">TopicPartition</span><span class="o">(</span><span class="n">topicName</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+<span class="n">kafkaConsumer</span><span class="o">.</span><span class="na">assign</span><span class="o">(</span><span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="n">tp</span><span class="o">));</span>
+<span class="n">kafkaConsumer</span><span class="o">.</span><span class="na">seek</span><span class="o">(</span><span class="n">tp</span><span class="o">,</span> <span class="mi">6L</span><span class="o">)</span>
+</code></pre></div></div>
+<ul>
+  <li>만약 기존 group id를 사용하는 consumer를 통해 작업을 수행하고 commit 수행 시 __commit_offsets를 갱신 할 수 있으므로 유의</li>
+  <li>manual commit으로 설정하고 commit을 수행하면 안됨 (디버깅 용)</li>
+</ul>
+
+
+
+    </div>
+
+</article>
+<div class="post-nav">
+<a class="previous" href="/kafka/2024/08/02/kafka-producer.html" title="Kafka Producer">
+          <div>Kafka Producer</div>
+        </a><a class="next" href="/kafka/2024/08/11/multinode-kafka.html" title="Multi-node Kafka Cluster">
+          <div>Multi-node Kafka Cluster</div>
+        </a>
+</div>
+<div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li class="">
+          <a class="post-link" href="/kubernetes/2024/09/07/service.html" title="네트워크를 통해 서비스에 파드 연결">
+            네트워크를 통해 서비스에 파드 연결<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="">
+          <a class="post-link" href="/kafka/2024/08/02/kafka-producer.html" title="Kafka Producer">
+            Kafka Producer<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="">
+          <a class="post-link" href="/kafka/2024/08/25/kafka-cluster.html" title="Kafka Cluster">
+            Kafka Cluster<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="">
+          <a class="post-link" href="/kubernetes/2024/08/01/kuberneter-helml.html" title="헬름을 이용한 애플리케이션 패키징 및 관리">
+            헬름을 이용한 애플리케이션 패키징 및 관리<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+</ul>
+    </div>
+<div class="post-comments"></div></section>
+</div>
+
+
+  </section>
+  <section class="sidebar" style="margin-left: 15px;">
+    <!-- Get sidebar items --><style type="text/css" media="screen">
+.post-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+</style>
+
+<div class="post-menu">
+  <div class="post-menu-title">TOC</div>
+  <div class="post-menu-content"></div>
+</div>
+
+<script>
+  function generateContent() {
+    var menu = document.querySelector(".post-menu");
+    var menuContent =  menu.querySelector(".post-menu-content");
+    var headings = document.querySelector(".post-content").querySelectorAll("h2, h3, h4, h5, h6");
+
+    // Hide menu when no headings
+    if (headings.length === 0) {
+      return menu.style.display = "none";
+    }
+
+    // Generate post menu
+    var menuHTML = '';
+    for (var i = 0; i < headings.length; i++) {
+      var h = headings[i];
+      menuHTML += (
+        '<li class="h-' + h.tagName.toLowerCase() + '">'
+        + '<a href="#h-' + h.getAttribute('id') + '">' + h.textContent + '</a></li>');
+    }
+
+    menuContent.innerHTML = '<ul>' + menuHTML + '</ul>';
+
+    // The header element
+    var header = document.querySelector('header.site-header');
+
+    function doMenuCollapse(index, over_items) {
+      var items = menuContent.firstChild.children;
+
+      if (over_items == undefined) {
+        over_items = 20;
+      }
+
+      if (items.length < over_items) {
+        return;
+      }
+
+      var activeItem = items[index];
+      var beginItem = activeItem
+      var endItem = activeItem
+      var beginIndex = index;
+      var endIndex = index + 1;
+      while (beginIndex >= 0
+        && !items[beginIndex].classList.contains('h-h2')) {
+        beginIndex -= 1;
+      }
+      while (endIndex < items.length
+        && !items[endIndex].classList.contains('h-h2')) {
+        endIndex += 1;
+      }
+      for (var i = 0; i < beginIndex; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+      for (var i = beginIndex + 1; i < endIndex; i++) {
+        item = items[i]
+        // if (!item.classList.contains('h-h2')) {
+          item.style.display = '';
+        // }
+      }
+      for (var i = endIndex; i < items.length; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+    }
+
+    // Init menu collapsed
+    doMenuCollapse(-1);
+
+    // Active the menu item
+    window.addEventListener('scroll', function (event) {
+      var lastActive = menuContent.querySelector('.active');
+      var changed = true;
+      var activeIndex = -1;
+      for (var i = headings.length - 1; i >= 0; i--) {
+        var h = headings[i];
+        var headingRect = h.getBoundingClientRect();
+        var headerRect = header.getBoundingClientRect();
+        var headerTop = Math.floor(headerRect.top);
+        var headerHeight = Math.floor(headerRect.height);
+        var headerHeight = headerTop + headerHeight + 20;
+        if (headingRect.top <= headerHeight) {
+          var id = 'h-' + h.getAttribute('id');
+          var a = menuContent.querySelector('a[href="#' + id  + '"]');
+          var curActive = a.parentNode;
+          if (curActive) {
+            curActive.classList.add('active');
+            activeIndex = i;
+          }
+          if (lastActive == curActive) {
+            changed = false;
+          }
+          break;
+        }
+      }
+      if (changed) {
+        if (lastActive) {
+          lastActive.classList.remove('active');
+        }
+        doMenuCollapse(activeIndex);
+      }
+      event.preventDefault();
+    });
+  }
+  generateContent();
+</script>
+</section>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+    <div class="site-footer-inner">
+<div>Unpublished Work <span class="copyleft">©</span> 2023-2026 hyunjune</div>
+      <div class="footer-col rss-subscribe">Subscribe <a href="/feed.xml">via RSS</a>
+</div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
