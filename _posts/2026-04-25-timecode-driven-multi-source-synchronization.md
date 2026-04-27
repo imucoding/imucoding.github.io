@@ -287,7 +287,7 @@ def remap_pkt(pkt: bytes, base90: int) -> bytes:
                 
     return pkt
 ```
-- MPEGTS에서는 90kHz를 PTS/DTS의 단위로 사용하는 것이 규격에서 갖에하는 표준
+- MPEGTS에서는 90kHz를 PTS/DTS의 단위로 사용하는 것이 규격에서 갖게하는 표준
     - 모든 비디오/오디오 프레임 레이트를 소수점 없이 딱 떨어지는 정수로 나누기 위한 최소공배수이기 때문
         - 24fps : 3750 tick
         - 25fps : 3600 tick
